@@ -1,0 +1,244 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SmartRent OS - Đăng Nhập</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="style.css">
+    <style>
+        .tab-btn.active {
+            background: rgba(255, 255, 255, 0.7);
+            box-shadow: 0 4px 15px rgba(0,0,0,0.05);
+            font-weight: 700;
+        }
+    </style>
+</head>
+<body class="h-screen overflow-hidden text-gray-800 antialiased flex items-center justify-center p-4">
+
+    <!-- Toast Container -->
+    <div id="toast-container"></div>
+
+    <!-- MAIN CARD -->
+    <div class="glass-panel p-8 rounded-3xl w-full max-w-lg mx-auto relative overflow-hidden shadow-2xl border border-white/60">
+        <div class="text-center mb-6">
+            <div class="w-16 h-16 rounded-2xl bg-gradient-to-tr from-blue-600 to-indigo-600 shadow-lg flex items-center justify-center text-white font-extrabold text-2xl mx-auto mb-2 shadow-indigo-500/25">S</div>
+            <h2 class="text-2xl font-black tracking-tight text-gray-900 leading-none">SmartRent OS</h2>
+            <p class="text-xs text-gray-500 font-medium mt-1">Hệ thống thông tin quản lý nhà trọ thông minh</p>
+        </div>
+
+        <!-- Tab control Đăng nhập / Đăng ký -->
+        <div class="grid grid-cols-2 p-1.5 bg-gray-200/50 rounded-2xl mb-6 border border-white/50">
+            <button onclick="switchMode('login')" id="btn-login-tab" class="tab-btn active py-2.5 rounded-xl text-xs font-semibold transition">Đăng Nhập</button>
+            <button onclick="switchMode('register')" id="btn-register-tab" class="tab-btn py-2.5 rounded-xl text-xs font-semibold text-gray-500 hover:text-gray-900 transition">Đăng Ký</button>
+        </div>
+
+        <!-- FORM: ĐĂNG NHẬP -->
+        <div id="form-login" class="space-y-4">
+            <!-- Chọn vai trò -->
+            <div>
+                <label class="block text-[10px] font-bold text-gray-400 uppercase tracking-wider mb-1.5">Bạn là ai?</label>
+                <div class="grid grid-cols-2 gap-3">
+                    <button onclick="setLoginRole('tenant')" id="role-login-tenant" class="py-3 px-4 rounded-xl border-2 border-emerald-500 bg-emerald-50/50 text-emerald-800 font-bold text-xs flex items-center justify-center gap-2 transition">
+                        <i class="fas fa-home text-sm"></i> Khách Thuê
+                    </button>
+                    <button onclick="setLoginRole('landlord')" id="role-login-landlord" class="py-3 px-4 rounded-xl border-2 border-transparent bg-white/50 text-gray-600 hover:bg-white font-bold text-xs flex items-center justify-center gap-2 transition">
+                        <i class="fas fa-chart-line text-sm"></i> Chủ Trọ
+                    </button>
+                </div>
+            </div>
+
+            <!-- Tên đăng nhập / Mật khẩu -->
+            <div class="space-y-3">
+                <div class="relative">
+                    <i class="fas fa-user absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 text-xs"></i>
+                    <input type="text" id="loginUsername" placeholder="Tên đăng nhập..." class="bg-white/50 w-full pl-11 pr-4 py-3 rounded-xl border border-white outline-none text-xs font-semibold focus:border-blue-500 transition">
+                </div>
+                <div class="relative">
+                    <i class="fas fa-lock absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 text-xs"></i>
+                    <input type="password" id="loginPassword" placeholder="Mật khẩu..." class="bg-white/50 w-full pl-11 pr-4 py-3 rounded-xl border border-white outline-none text-xs font-semibold focus:border-blue-500 transition">
+                </div>
+            </div>
+
+            <button onclick="submitLogin()" class="w-full py-3.5 bg-blue-600 hover:bg-blue-500 text-white font-bold text-xs rounded-xl shadow-lg shadow-blue-600/15 transition flex items-center justify-center gap-2">
+                <i class="fas fa-sign-in-alt"></i> Xác Nhận Đăng Nhập
+            </button>
+
+            <!-- TÀI KHOẢN DEMO QUYỀN LỰC -->
+            <div class="pt-4 border-t border-white/20">
+                <span class="block text-[9px] font-bold text-gray-400 uppercase tracking-wider mb-2 text-center">Hoặc click để tự điền tài khoản Demo</span>
+                <div class="grid grid-cols-2 gap-2">
+                    <button onclick="autofill('khach1', 'khach1', 'tenant')" class="p-2.5 bg-emerald-50 hover:bg-emerald-100 rounded-xl text-[10px] font-bold text-emerald-700 transition text-left border border-emerald-100">
+                        <span class="block text-[9px] text-emerald-500 uppercase font-black">Khách Thuê Demo</span>
+                        Username: khach1
+                    </button>
+                    <button onclick="autofill('chutro1', 'chutro1', 'landlord')" class="p-2.5 bg-blue-50 hover:bg-blue-100 rounded-xl text-[10px] font-bold text-blue-700 transition text-left border border-blue-100">
+                        <span class="block text-[9px] text-blue-500 uppercase font-black">Chủ Trọ Demo</span>
+                        Username: chutro1
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- FORM: ĐĂNG KÝ -->
+        <div id="form-register" class="hidden space-y-4">
+            <!-- Chọn vai trò đăng ký -->
+            <div>
+                <label class="block text-[10px] font-bold text-gray-400 uppercase tracking-wider mb-1.5">Đăng ký tài khoản cho?</label>
+                <div class="grid grid-cols-2 gap-3">
+                    <button onclick="setRegisterRole('tenant')" id="role-reg-tenant" class="py-2 px-4 rounded-xl border-2 border-emerald-500 bg-emerald-50/50 text-emerald-800 font-bold text-xs flex items-center justify-center gap-2 transition">
+                        <i class="fas fa-home"></i> Khách Thuê
+                    </button>
+                    <button onclick="setRegisterRole('landlord')" id="role-reg-landlord" class="py-2 px-4 rounded-xl border-2 border-transparent bg-white/50 text-gray-600 hover:bg-white font-bold text-xs flex items-center justify-center gap-2 transition">
+                        <i class="fas fa-chart-line"></i> Chủ Trọ
+                    </button>
+                </div>
+            </div>
+
+            <!-- Các ô nhập liệu -->
+            <div class="grid grid-cols-2 gap-3">
+                <div class="col-span-2 relative">
+                    <i class="fas fa-id-card absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 text-xs"></i>
+                    <input type="text" id="regName" placeholder="Họ và tên..." class="bg-white/50 w-full pl-11 pr-4 py-2.5 rounded-xl border border-white outline-none text-xs font-semibold focus:border-blue-500 transition">
+                </div>
+                <div class="relative">
+                    <i class="fas fa-phone absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 text-xs"></i>
+                    <input type="tel" id="regPhone" placeholder="Số điện thoại..." class="bg-white/50 w-full pl-11 pr-4 py-2.5 rounded-xl border border-white outline-none text-xs font-semibold focus:border-blue-500 transition">
+                </div>
+                <div class="relative">
+                    <i class="fas fa-envelope absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 text-xs"></i>
+                    <input type="email" id="regEmail" placeholder="Email liên hệ..." class="bg-white/50 w-full pl-11 pr-4 py-2.5 rounded-xl border border-white outline-none text-xs font-semibold focus:border-blue-500 transition">
+                </div>
+                <div class="relative">
+                    <i class="fas fa-user-plus absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 text-xs"></i>
+                    <input type="text" id="regUsername" placeholder="Tên đăng nhập..." class="bg-white/50 w-full pl-11 pr-4 py-2.5 rounded-xl border border-white outline-none text-xs font-semibold focus:border-blue-500 transition">
+                </div>
+                <div class="relative">
+                    <i class="fas fa-key absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 text-xs"></i>
+                    <input type="password" id="regPassword" placeholder="Mật khẩu..." class="bg-white/50 w-full pl-11 pr-4 py-2.5 rounded-xl border border-white outline-none text-xs font-semibold focus:border-blue-500 transition">
+                </div>
+            </div>
+
+            <button onclick="submitRegister()" class="w-full py-3.5 bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs rounded-xl shadow-lg shadow-emerald-600/15 transition flex items-center justify-center gap-2">
+                <i class="fas fa-user-check"></i> Đăng Ký Tài Khoản Mới
+            </button>
+        </div>
+
+        <button onclick="resetDB()" class="text-[10px] text-gray-400 hover:text-red-500 transition mt-6 underline block w-full text-center font-semibold">Làm mới Cơ sở dữ liệu (Reset DB)</button>
+    </div>
+
+    <script src="db.js"></script>
+    <script>
+        let currentLoginRole = 'tenant';
+        let currentRegisterRole = 'tenant';
+
+        // Gửi thông báo Toast
+        function showToast(message, type = 'success') {
+            let container = document.getElementById('toast-container');
+            const toast = document.createElement('div');
+            toast.className = 'toast';
+            let icon = '<i class="fas fa-info-circle text-blue-500"></i>';
+            if (type === 'success') { icon = '<i class="fas fa-check-circle text-emerald-500"></i>'; toast.classList.add('glow-green'); }
+            else if (type === 'error') { icon = '<i class="fas fa-exclamation-circle text-red-500"></i>'; toast.classList.add('glow-red'); }
+            toast.innerHTML = `${icon} <span class="text-xs font-bold text-gray-700">${message}</span>`;
+            container.appendChild(toast);
+            setTimeout(() => toast.classList.add('show'), 10);
+            setTimeout(() => { toast.classList.remove('show'); setTimeout(() => toast.remove(), 300); }, 3500);
+        }
+
+        // Chuyển tab Đăng nhập / Đăng ký
+        function switchMode(mode) {
+            document.getElementById('btn-login-tab').className = mode === 'login' ? 'tab-btn active py-2.5 rounded-xl text-xs font-semibold transition' : 'tab-btn py-2.5 rounded-xl text-xs font-semibold text-gray-500 hover:text-gray-900 transition';
+            document.getElementById('btn-register-tab').className = mode === 'register' ? 'tab-btn active py-2.5 rounded-xl text-xs font-semibold transition' : 'tab-btn py-2.5 rounded-xl text-xs font-semibold text-gray-500 hover:text-gray-900 transition';
+            
+            if (mode === 'login') {
+                document.getElementById('form-login').classList.remove('hidden');
+                document.getElementById('form-register').classList.add('hidden');
+            } else {
+                document.getElementById('form-login').classList.add('hidden');
+                document.getElementById('form-register').classList.remove('hidden');
+            }
+        }
+
+        // Đổi vai trò phần Đăng Nhập
+        function setLoginRole(role) {
+            currentLoginRole = role;
+            const btnTenant = document.getElementById('role-login-tenant');
+            const btnLandlord = document.getElementById('role-login-landlord');
+            
+            if (role === 'tenant') {
+                btnTenant.className = "py-3 px-4 rounded-xl border-2 border-emerald-500 bg-emerald-50/50 text-emerald-800 font-bold text-xs flex items-center justify-center gap-2 transition";
+                btnLandlord.className = "py-3 px-4 rounded-xl border-2 border-transparent bg-white/50 text-gray-600 hover:bg-white font-bold text-xs flex items-center justify-center gap-2 transition";
+            } else {
+                btnTenant.className = "py-3 px-4 rounded-xl border-2 border-transparent bg-white/50 text-gray-600 hover:bg-white font-bold text-xs flex items-center justify-center gap-2 transition";
+                btnLandlord.className = "py-3 px-4 rounded-xl border-2 border-blue-500 bg-blue-50/50 text-blue-800 font-bold text-xs flex items-center justify-center gap-2 transition";
+            }
+        }
+
+        // Đổi vai trò phần Đăng Ký
+        function setRegisterRole(role) {
+            currentRegisterRole = role;
+            const btnTenant = document.getElementById('role-reg-tenant');
+            const btnLandlord = document.getElementById('role-reg-landlord');
+            
+            if (role === 'tenant') {
+                btnTenant.className = "py-2 px-4 rounded-xl border-2 border-emerald-500 bg-emerald-50/50 text-emerald-800 font-bold text-xs flex items-center justify-center gap-2 transition";
+                btnLandlord.className = "py-2 px-4 rounded-xl border-2 border-transparent bg-white/50 text-gray-600 hover:bg-white font-bold text-xs flex items-center justify-center gap-2 transition";
+            } else {
+                btnTenant.className = "py-2 px-4 rounded-xl border-2 border-transparent bg-white/50 text-gray-600 hover:bg-white font-bold text-xs flex items-center justify-center gap-2 transition";
+                btnLandlord.className = "py-2 px-4 rounded-xl border-2 border-blue-500 bg-blue-50/50 text-blue-800 font-bold text-xs flex items-center justify-center gap-2 transition";
+            }
+        }
+
+        // Tự động điền tài khoản Demo
+        function autofill(username, password, role) {
+            setLoginRole(role);
+            document.getElementById('loginUsername').value = username;
+            document.getElementById('loginPassword').value = password;
+            showToast('Đã điền thông tin tài khoản demo!', 'success');
+        }
+
+        // Xác nhận đăng nhập
+        function submitLogin() {
+            const user = document.getElementById('loginUsername').value.trim();
+            const pass = document.getElementById('loginPassword').value;
+            
+            if (!user || !pass) {
+                showToast('Vui lòng nhập đầy đủ Tên đăng nhập và Mật khẩu!', 'error');
+                return;
+            }
+
+            const res = loginUser(user, pass, currentLoginRole);
+            if (!res.success) {
+                showToast(res.message, 'error');
+            }
+        }
+
+        // Xác nhận đăng ký
+        function submitRegister() {
+            const name = document.getElementById('regName').value.trim();
+            const phone = document.getElementById('regPhone').value.trim();
+            const email = document.getElementById('regEmail').value.trim();
+            const user = document.getElementById('regUsername').value.trim();
+            const pass = document.getElementById('regPassword').value;
+            
+            if (!name || !phone || !email || !user || !pass) {
+                showToast('Vui lòng nhập đầy đủ các trường đăng ký!', 'error');
+                return;
+            }
+
+            const res = registerUser(name, phone, email, user, pass, currentRegisterRole);
+            if (res.success) {
+                showToast(res.message, 'success');
+                setTimeout(() => {
+                    switchMode('login');
+                    autofill(user, pass, currentRegisterRole);
+                }, 1000);
+            } else {
+                showToast(res.message, 'error');
+            }
+        }
+    </script>
+</body>
+</html>
