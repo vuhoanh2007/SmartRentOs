@@ -1578,5 +1578,168 @@
         updateBadges();
         renderSearchGrid();
     </script>
+
+    <!-- ===== CHATBOT ASSISTANT WIDGET ===== -->
+    <div id="chatWidget" class="fixed bottom-6 right-6 z-50 flex flex-col items-end">
+        <!-- Chat Window -->
+        <div id="chatWindow" class="hidden w-80 md:w-96 h-[450px] glass-modal rounded-3xl border border-white/60 shadow-2xl overflow-hidden flex flex-col mb-4 transition-all duration-300 transform translate-y-4 opacity-0 scale-95">
+            <!-- Chat Header -->
+            <div class="p-4 bg-gradient-to-r from-blue-600/80 to-indigo-600/80 text-white flex items-center justify-between shrink-0">
+                <div class="flex items-center gap-2.5">
+                    <div class="w-8 h-8 rounded-xl bg-white/20 flex items-center justify-center text-base"><i class="fas fa-robot"></i></div>
+                    <div>
+                        <h4 class="font-extrabold text-xs">Trợ lý ảo SmartRent</h4>
+                        <span class="text-[9px] opacity-75">Hỗ trợ pháp lý & sự cố 24/7</span>
+                    </div>
+                </div>
+                <button onclick="toggleChat(false)" class="text-white/80 hover:text-white"><i class="fas fa-times"></i></button>
+            </div>
+            <!-- Chat Body (Messages) -->
+            <div id="chatMessages" class="flex-1 p-4 overflow-y-auto space-y-3 text-xs">
+                <!-- Welcome message -->
+                <div class="flex items-start gap-2">
+                    <div class="w-6 h-6 rounded-lg bg-blue-100 text-blue-600 flex items-center justify-center shrink-0 text-[10px]"><i class="fas fa-robot"></i></div>
+                    <div class="bg-white/40 p-2.5 rounded-2xl rounded-tl-none border border-white/20 max-w-[80%] text-gray-800">
+                        Xin chào! Tôi là Trợ lý ảo SmartRent. Tôi có thể giúp bạn giải đáp các thắc mắc về <b>hợp đồng, pháp lý, hóa đơn hoặc hướng dẫn báo cáo sự cố</b>. Bạn có câu hỏi nào không?
+                    </div>
+                </div>
+                <!-- Suggestions chips -->
+                <div class="flex flex-wrap gap-1.5 pt-1">
+                    <button onclick="sendSuggestedMessage('Quy định lấy lại tiền đặt cọc?')" class="px-2.5 py-1 bg-blue-50/60 hover:bg-blue-50 border border-blue-200/50 text-[10px] text-blue-600 rounded-full font-semibold transition">Tiền đặt cọc</button>
+                    <button onclick="sendSuggestedMessage('Làm thế nào để báo cáo sự cố hỏng hóc?')" class="px-2.5 py-1 bg-emerald-50/60 hover:bg-emerald-50 border border-emerald-200/50 text-[10px] text-emerald-600 rounded-full font-semibold transition">Báo cáo sự cố</button>
+                    <button onclick="sendSuggestedMessage('Thời hạn đóng tiền phòng hàng tháng?')" class="px-2.5 py-1 bg-amber-50/60 hover:bg-amber-50 border border-amber-200/50 text-[10px] text-amber-600 rounded-full font-semibold transition">Hóa đơn & Kỳ đóng phí</button>
+                    <button onclick="sendSuggestedMessage('Quy định đăng ký tạm trú tạm vắng?')" class="px-2.5 py-1 bg-indigo-50/60 hover:bg-indigo-50 border border-indigo-200/50 text-[10px] text-indigo-600 rounded-full font-semibold transition">Đăng ký tạm trú</button>
+                </div>
+            </div>
+            <!-- Chat Footer (Input) -->
+            <div class="p-3 border-t border-white/20 flex gap-2 bg-white/10 shrink-0">
+                <input type="text" id="chatInput" onkeypress="handleChatKey(event)" placeholder="Nhập câu hỏi của bạn..." class="bg-white/50 flex-1 px-3 py-2 border border-white/60 rounded-xl outline-none focus:border-blue-500 text-xs font-semibold">
+                <button onclick="sendChatMessage()" class="w-8 h-8 bg-blue-600 hover:bg-blue-500 text-white rounded-xl flex items-center justify-center transition shrink-0"><i class="fas fa-paper-plane text-xs"></i></button>
+            </div>
+        </div>
+        <!-- Trigger Button -->
+        <button onclick="toggleChat(true)" id="chatBubble" class="w-12 h-12 bg-gradient-to-tr from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 text-white rounded-full shadow-lg hover:shadow-xl transition-all duration-300 flex items-center justify-center text-lg z-50">
+            <i class="fas fa-comments"></i>
+        </button>
+    </div>
+
+    <script>
+        // Chatbot logic
+        let isChatOpen = false;
+
+        function toggleChat(open) {
+            isChatOpen = open;
+            const chatWindow = document.getElementById('chatWindow');
+            const chatBubble = document.getElementById('chatBubble');
+            if (open) {
+                chatWindow.classList.remove('hidden');
+                setTimeout(() => {
+                    chatWindow.classList.remove('translate-y-4', 'opacity-0', 'scale-95');
+                }, 10);
+                chatBubble.classList.add('hidden');
+                document.getElementById('chatInput').focus();
+            } else {
+                chatWindow.classList.add('translate-y-4', 'opacity-0', 'scale-95');
+                setTimeout(() => {
+                    chatWindow.classList.add('hidden');
+                }, 300);
+                chatBubble.classList.remove('hidden');
+            }
+        }
+
+        function handleChatKey(event) {
+            if (event.key === 'Enter') {
+                sendChatMessage();
+            }
+        }
+
+        function sendSuggestedMessage(text) {
+            const input = document.getElementById('chatInput');
+            input.value = text;
+            sendChatMessage();
+        }
+
+        function sendChatMessage() {
+            const input = document.getElementById('chatInput');
+            const messageText = input.value.trim();
+            if (!messageText) return;
+
+            appendChatMessage('user', messageText);
+            input.value = '';
+
+            setTimeout(() => {
+                const response = getChatbotResponse(messageText);
+                appendChatMessage('bot', response);
+            }, 500);
+        }
+
+        function appendChatMessage(sender, text) {
+            const chatMessages = document.getElementById('chatMessages');
+            const div = document.createElement('div');
+            div.className = 'flex items-start gap-2 ' + (sender === 'user' ? 'justify-end' : '');
+            
+            let avatarHtml = '';
+            let contentClass = '';
+            
+            if (sender === 'bot') {
+                avatarHtml = `<div class="w-6 h-6 rounded-lg bg-blue-100 text-blue-600 flex items-center justify-center shrink-0 text-[10px]"><i class="fas fa-robot"></i></div>`;
+                contentClass = 'bg-white/40 border border-white/20 text-gray-800 rounded-tl-none';
+            } else {
+                avatarHtml = '';
+                contentClass = 'bg-blue-600 text-white rounded-tr-none';
+            }
+
+            div.innerHTML = `
+                ${avatarHtml}
+                <div class="p-2.5 rounded-2xl border max-w-[80%] break-words ${contentClass}">
+                    ${text}
+                </div>
+            `;
+            chatMessages.appendChild(div);
+            chatMessages.scrollTop = chatMessages.scrollHeight;
+        }
+
+        function getChatbotResponse(text) {
+            const msg = text.toLowerCase();
+            if (msg.includes('cọc') || msg.includes('đặt cọc') || msg.includes('hoàn cọc') || msg.includes('lấy lại cọc') || msg.includes('giữ chỗ')) {
+                return `<b>[Pháp lý - Tiền đặt cọc]</b><br>
+                Theo quy định của SmartRent và Luật Dân sự Việt Nam:<br>
+                1. <b>Hoàn trả 100%</b> tiền đặt cọc khi hợp đồng hết hạn và bạn bàn giao phòng đúng quy định (không hỏng hóc lớn, thanh toán đủ tiền điện nước).<br>
+                2. Nếu <b>hủy hợp đồng trước hạn</b>, bạn phải thông báo cho Chủ hộ trước ít nhất <b>30 ngày</b>. Tiền cọc sẽ được hoàn trả theo điều khoản thanh lý đã ký kết. Nếu tự ý dọn đi không báo trước, bạn sẽ bị mất tiền cọc.`;
+            }
+            if (msg.includes('sự cố') || msg.includes('hỏng') || msg.includes('sửa') || msg.includes('cháy') || msg.includes('nước') || msg.includes('điện') || msg.includes('đèn') || msg.includes('mất nước') || msg.includes('báo cáo')) {
+                return `<b>[Báo cáo hỏng hóc & Sự cố]</b><br>
+                Để gửi yêu cầu sửa chữa thiết bị, bạn hãy thực hiện theo các bước sau:<br>
+                1. Vào mục <b>"Phòng của tôi"</b> trên thanh menu.<br>
+                2. Cuộn xuống phần <b>"Báo cáo sự cố thiết bị"</b>.<br>
+                3. Nhập mô tả chi tiết sự cố và mức độ ưu tiên (Thường hoặc Khẩn cấp).<br>
+                4. Nhấn <b>"Gửi báo cáo"</b>. Chủ trọ sẽ nhận được thông báo ngay lập tức và sắp xếp thợ đến sửa chữa cho bạn trong vòng 24 - 48h.`;
+            }
+            if (msg.includes('tạm trú') || msg.includes('tạm vắng') || msg.includes('công an') || msg.includes('khai báo') || msg.includes('đăng ký cư trú')) {
+                return `<b>[Thủ tục tạm trú tạm vắng]</b><br>
+                Quy định pháp lý về đăng ký cư trú:<br>
+                - Khách thuê trọ có trách nhiệm đăng ký tạm trú tại Công an phường sở tại trong vòng 30 ngày kể từ khi dọn đến.<br>
+                - Chủ trọ sẽ cung cấp bản sao <b>Giấy chứng nhận quyền sở hữu nhà</b> (Sổ đỏ) và ký tên vào bản <b>Khai báo tạm trú (CT01)</b>.<br>
+                - Bạn cần chuẩn bị: Căn cước công dân (CCCD), Bản hợp đồng thuê trọ đã ký và liên hệ Công an phường để nộp hồ sơ hoặc đăng ký qua Cổng dịch vụ công Quốc gia.`;
+            }
+            if (msg.includes('hóa đơn') || msg.includes('thanh toán') || msg.includes('tiền phòng') || msg.includes('chuyển khoản') || msg.includes('kỳ thanh toán') || msg.includes('phí trễ')) {
+                return `<b>[Thanh toán & Hóa đơn]</b><br>
+                1. <b>Thời gian đóng tiền</b>: Từ ngày <b>1 đến ngày 5</b> hàng tháng. Hệ thống sẽ phát cảnh báo nếu quá hạn thanh toán.<br>
+                2. <b>Phương thức</b>: Chuyển khoản trực tiếp cho Chủ trọ. Bạn có thể xem chi tiết STK và số tiền cần đóng ở tab <b>"Phòng của tôi"</b> -> chọn hóa đơn chưa thanh toán.<br>
+                3. <b>Biên lai</b>: Khi chủ trọ xác nhận đã nhận tiền, hóa đơn sẽ tự động chuyển sang trạng thái <b>"Đã thanh toán"</b> và tạo biên lai giao dịch trong lịch sử.`;
+            }
+            if (msg.includes('wifi') || msg.includes('mạng') || msg.includes('internet') || msg.includes('pass') || msg.includes('mật khẩu mạng')) {
+                return `<b>[Thông tin Wifi tòa nhà]</b><br>
+                - Mạng Wifi công cộng của tòa nhà: <b>SmartRent_Free</b><br>
+                - Mật khẩu đăng nhập mặc định: <b>Smart@Rent2026</b><br>
+                Nếu phòng của bạn có trang bị router Wifi riêng, vui lòng xem mật khẩu in ở tem dán phía sau thiết bị router.`;
+            }
+            return `Tôi đã nhận được câu hỏi của bạn. Để được hỗ trợ nhanh nhất, bạn có thể tham khảo các chủ đề pháp lý và vận hành phổ biến sau:<br>
+            - <i>"Quy định lấy lại tiền đặt cọc?"</i><br>
+            - <i>"Quy trình báo cáo thiết bị hỏng?"</i><br>
+            - <i>"Thời hạn và phương thức đóng tiền phòng?"</i><br>
+            - <i>"Thủ tục đăng ký tạm trú với Công an?"</i>`;
+        }
+    </script>
 </body>
 </html>

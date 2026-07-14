@@ -1271,5 +1271,158 @@
         // ============================================================
         loadDashboard();
     </script>
+
+    <!-- ===== CHATBOT ASSISTANT WIDGET ===== -->
+    <div id="chatWidget" class="fixed bottom-6 right-6 z-50 flex flex-col items-end">
+        <!-- Chat Window -->
+        <div id="chatWindow" class="hidden w-80 md:w-96 h-[450px] glass-modal rounded-3xl border border-white/60 shadow-2xl overflow-hidden flex flex-col mb-4 transition-all duration-300 transform translate-y-4 opacity-0 scale-95">
+            <!-- Chat Header -->
+            <div class="p-4 bg-gradient-to-r from-blue-600/80 to-indigo-600/80 text-white flex items-center justify-between shrink-0">
+                <div class="flex items-center gap-2.5">
+                    <div class="w-8 h-8 rounded-xl bg-white/20 flex items-center justify-center text-base"><i class="fas fa-robot"></i></div>
+                    <div>
+                        <h4 class="font-extrabold text-xs">Trợ lý ảo SmartRent (Chủ hộ)</h4>
+                        <span class="text-[9px] opacity-75">Tư vấn quản lý & pháp lý 24/7</span>
+                    </div>
+                </div>
+                <button onclick="toggleChat(false)" class="text-white/80 hover:text-white"><i class="fas fa-times"></i></button>
+            </div>
+            <!-- Chat Body (Messages) -->
+            <div id="chatMessages" class="flex-1 p-4 overflow-y-auto space-y-3 text-xs">
+                <!-- Welcome message -->
+                <div class="flex items-start gap-2">
+                    <div class="w-6 h-6 rounded-lg bg-blue-100 text-blue-600 flex items-center justify-center shrink-0 text-[10px]"><i class="fas fa-robot"></i></div>
+                    <div class="bg-white/40 p-2.5 rounded-2xl rounded-tl-none border border-white/20 max-w-[80%] text-gray-800">
+                        Xin chào! Tôi là Trợ lý ảo hỗ trợ Chủ trọ. Tôi có thể giải đáp các câu hỏi về <b>quy định hợp đồng thuê, trách nhiệm bảo trì hư hỏng, thủ tục khai báo tạm trú và phương pháp ghi hóa đơn dịch vụ</b>. Bạn muốn hỏi gì?
+                    </div>
+                </div>
+                <!-- Suggestions chips -->
+                <div class="flex flex-wrap gap-1.5 pt-1">
+                    <button onclick="sendSuggestedMessage('Hợp đồng điện tử có hợp pháp không?')" class="px-2.5 py-1 bg-blue-50/60 hover:bg-blue-50 border border-blue-200/50 text-[10px] text-blue-600 rounded-full font-semibold transition">Hợp đồng điện tử</button>
+                    <button onclick="sendSuggestedMessage('Trách nhiệm sửa chữa thiết bị của ai?')" class="px-2.5 py-1 bg-emerald-50/60 hover:bg-emerald-50 border border-emerald-200/50 text-[10px] text-emerald-600 rounded-full font-semibold transition">Trách nhiệm sửa chữa</button>
+                    <button onclick="sendSuggestedMessage('Khai báo tạm trú cho khách thế nào?')" class="px-2.5 py-1 bg-indigo-50/60 hover:bg-indigo-50 border border-indigo-200/50 text-[10px] text-indigo-600 rounded-full font-semibold transition">Đăng ký tạm trú</button>
+                    <button onclick="sendSuggestedMessage('Cách ghi số điện nước xuất hóa đơn?')" class="px-2.5 py-1 bg-amber-50/60 hover:bg-amber-50 border border-amber-200/50 text-[10px] text-amber-600 rounded-full font-semibold transition">Ghi hóa đơn tháng</button>
+                </div>
+            </div>
+            <!-- Chat Footer (Input) -->
+            <div class="p-3 border-t border-white/20 flex gap-2 bg-white/10 shrink-0">
+                <input type="text" id="chatInput" onkeypress="handleChatKey(event)" placeholder="Nhập câu hỏi của bạn..." class="bg-white/50 flex-1 px-3 py-2 border border-white/60 rounded-xl outline-none focus:border-blue-500 text-xs font-semibold">
+                <button onclick="sendChatMessage()" class="w-8 h-8 bg-blue-600 hover:bg-blue-500 text-white rounded-xl flex items-center justify-center transition shrink-0"><i class="fas fa-paper-plane text-xs"></i></button>
+            </div>
+        </div>
+        <!-- Trigger Button -->
+        <button onclick="toggleChat(true)" id="chatBubble" class="w-12 h-12 bg-gradient-to-tr from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 text-white rounded-full shadow-lg hover:shadow-xl transition-all duration-300 flex items-center justify-center text-lg z-50">
+            <i class="fas fa-comments"></i>
+        </button>
+    </div>
+
+    <script>
+        // Chatbot logic
+        let isChatOpen = false;
+
+        function toggleChat(open) {
+            isChatOpen = open;
+            const chatWindow = document.getElementById('chatWindow');
+            const chatBubble = document.getElementById('chatBubble');
+            if (open) {
+                chatWindow.classList.remove('hidden');
+                setTimeout(() => {
+                    chatWindow.classList.remove('translate-y-4', 'opacity-0', 'scale-95');
+                }, 10);
+                chatBubble.classList.add('hidden');
+                document.getElementById('chatInput').focus();
+            } else {
+                chatWindow.classList.add('translate-y-4', 'opacity-0', 'scale-95');
+                setTimeout(() => {
+                    chatWindow.classList.add('hidden');
+                }, 300);
+                chatBubble.classList.remove('hidden');
+            }
+        }
+
+        function handleChatKey(event) {
+            if (event.key === 'Enter') {
+                sendChatMessage();
+            }
+        }
+
+        function sendSuggestedMessage(text) {
+            const input = document.getElementById('chatInput');
+            input.value = text;
+            sendChatMessage();
+        }
+
+        function sendChatMessage() {
+            const input = document.getElementById('chatInput');
+            const messageText = input.value.trim();
+            if (!messageText) return;
+
+            appendChatMessage('user', messageText);
+            input.value = '';
+
+            setTimeout(() => {
+                const response = getChatbotResponse(messageText);
+                appendChatMessage('bot', response);
+            }, 500);
+        }
+
+        function appendChatMessage(sender, text) {
+            const chatMessages = document.getElementById('chatMessages');
+            const div = document.createElement('div');
+            div.className = 'flex items-start gap-2 ' + (sender === 'user' ? 'justify-end' : '');
+            
+            let avatarHtml = '';
+            let contentClass = '';
+            
+            if (sender === 'bot') {
+                avatarHtml = `<div class="w-6 h-6 rounded-lg bg-blue-100 text-blue-600 flex items-center justify-center shrink-0 text-[10px]"><i class="fas fa-robot"></i></div>`;
+                contentClass = 'bg-white/40 border border-white/20 text-gray-800 rounded-tl-none';
+            } else {
+                avatarHtml = '';
+                contentClass = 'bg-blue-600 text-white rounded-tr-none';
+            }
+
+            div.innerHTML = `
+                ${avatarHtml}
+                <div class="p-2.5 rounded-2xl border max-w-[80%] break-words ${contentClass}">
+                    ${text}
+                </div>
+            `;
+            chatMessages.appendChild(div);
+            chatMessages.scrollTop = chatMessages.scrollHeight;
+        }
+
+        function getChatbotResponse(text) {
+            const msg = text.toLowerCase();
+            if (msg.includes('hợp đồng') || msg.includes('lập hợp đồng') || msg.includes('điện tử') || msg.includes('kỹ số') || msg.includes('pháp lý')) {
+                return `<b>[Pháp lý - Hợp đồng thuê nhà]</b><br>
+                Theo Luật Nhà ở Việt Nam, hợp đồng thuê nhà có thời hạn dưới 6 tháng không bắt buộc công chứng. Hợp đồng điện tử ký số hoặc ký xác nhận trực tuyến bằng mã OTP/xác thực giữa hai bên vẫn có giá trị pháp lý dân sự đầy đủ để giải quyết tranh chấp.`;
+            }
+            if (msg.includes('sự cố') || msg.includes('sửa chữa') || msg.includes('chi phí') || msg.includes('trách nhiệm') || msg.includes('hỏng')) {
+                return `<b>[Trách nhiệm sửa chữa thiết bị]</b><br>
+                - <b>Chủ trọ chịu trách nhiệm</b>: Sửa chữa các hỏng hóc lớn liên quan đến kết cấu nhà (thấm tường, nứt dầm), hệ thống đường điện âm tường, đường nước tổng, hoặc các thiết bị hao mòn tự nhiên do thời gian (điều hòa hỏng lốc máy, máy giặt lỗi mainboard).<br>
+                - <b>Khách thuê chịu trách nhiệm</b>: Tự thay thế các vật tư tiêu hao (bóng đèn cháy, vòi nước rò rỉ gioăng, khóa cửa làm mất chìa) hoặc hỏng hóc do sử dụng sai hướng dẫn.`;
+            }
+            if (msg.includes('tạm trú') || msg.includes('tạm vắng') || msg.includes('công an') || msg.includes('khai báo') || msg.includes('đăng ký')) {
+                return `<b>[Khai báo tạm trú cho khách]</b><br>
+                Chủ trọ có nghĩa vụ cung cấp hồ sơ pháp lý liên quan và hỗ trợ khách thuê đăng ký tạm trú:<br>
+                1. Cung cấp file chụp <b>Sổ đỏ / Quyền sở hữu căn hộ</b>.<br>
+                2. Ký vào bản khai mẫu <b>CT01</b> nếu khách nộp trực tiếp.<br>
+                3. Hoặc chủ trọ có thể tự thực hiện khai báo online cho khách qua cổng <b>Dịch vụ công Bộ Công An</b> bằng cách nhập thông tin CCCD và ngày chuyển đến của khách.`;
+            }
+            if (msg.includes('hóa đơn') || msg.includes('tính tiền') || msg.includes('chỉ số') || msg.includes('điện nước') || msg.includes('ghi số')) {
+                return `<b>[Tính hóa đơn & Xuất biểu phí]</b><br>
+                Để lập hóa đơn hàng tháng:<br>
+                1. Vào tab <b>"Ghi hóa đơn"</b> -> Bấm <b>"Tính Tiền Tháng Mới"</b>.<br>
+                2. Nhập số điện/nước mới ghi nhận được từ công tơ. Hệ thống sẽ tự động trừ số cũ để tính ra sản lượng tiêu thụ thực tế và nhân đơn giá dịch vụ.<br>
+                3. Bấm <b>"Xuất hóa đơn"</b> để gửi thông báo tức thời sang cổng khách thuê.`;
+            }
+            return `Tôi đã ghi nhận câu hỏi của bạn. Để quản lý phòng trọ hiệu quả hơn, bạn có thể tham khảo một số hướng dẫn sau:<br>
+            - <i>"Giá trị pháp lý của Hợp đồng điện tử?"</i><br>
+            - <i>"Quy định phân chia trách nhiệm sửa chữa thiết bị?"</i><br>
+            - <i>"Cách đăng ký tạm trú cho khách thuê online?"</i><br>
+            - <i>"Cách tính chỉ số điện nước và xuất hóa đơn?"</i>`;
+        }
+    </script>
 </body>
 </html>
