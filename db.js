@@ -223,6 +223,13 @@ function initDB() {
 function getData() { return JSON.parse(localStorage.getItem(DB_KEY)); }
 function saveData(data) { localStorage.setItem(DB_KEY, JSON.stringify(data)); }
 
+function redirectWithTransition(url) {
+    document.body.classList.add('page-exit');
+    setTimeout(() => {
+        window.location.href = url;
+    }, 400);
+}
+
 function loginUser(username, password, role) {
     let db = getData();
     if (role === 'landlord') {
@@ -230,7 +237,7 @@ function loginUser(username, password, role) {
         if (user) {
             db.currentUser = { role: 'landlord', id: user.MaChuTro, name: user.TenChuTro, phone: user.SoDienThoai, email: user.Email };
             saveData(db);
-            window.location.href = 'landlord.html';
+            redirectWithTransition('landlord.html');
             return { success: true };
         }
     } else {
@@ -238,7 +245,7 @@ function loginUser(username, password, role) {
         if (user) {
             db.currentUser = { role: 'tenant', id: user.MaKhachHang, name: user.TenKhachHang, phone: user.SoDienThoai, email: user.Email };
             saveData(db);
-            window.location.href = 'tenant.html';
+            redirectWithTransition('tenant.html');
             return { success: true };
         }
     }
@@ -289,7 +296,7 @@ function logout() {
     let db = getData();
     db.currentUser = null;
     saveData(db);
-    window.location.href = 'index.html';
+    redirectWithTransition('index.html');
 }
 
 function checkAuth(requiredRole) {

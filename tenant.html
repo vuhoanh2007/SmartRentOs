@@ -869,8 +869,25 @@
             setTimeout(() => { toast.classList.remove('show'); setTimeout(() => toast.remove(), 300); }, 3500);
         }
 
-        function openModal(id) { document.getElementById(id).classList.remove('hidden'); }
-        function closeModal(id) { document.getElementById(id).classList.add('hidden'); }
+        function openModal(id) { 
+            let modal = document.getElementById(id);
+            if(modal) {
+                modal.classList.remove('hidden');
+                modal.classList.remove('closing');
+            }
+        }
+        function closeModal(id) { 
+            let modal = document.getElementById(id);
+            if(modal) {
+                modal.classList.add('closing');
+                setTimeout(() => {
+                    if(modal.classList.contains('closing')) {
+                        modal.classList.add('hidden');
+                        modal.classList.remove('closing');
+                    }
+                }, 250);
+            }
+        }
 
         function toggleSidebar(open) {
             const sidebar = document.getElementById('sidebar');
@@ -895,15 +912,21 @@
             }
             const tabs = ['search', 'myroom', 'notifications', 'settings'];
             tabs.forEach(t => {
-                document.getElementById(`view-${t}`).classList.add('hidden');
+                let view = document.getElementById(`view-${t}`);
+                view.classList.add('hidden');
+                view.classList.remove('animate-view');
                 const nav = document.getElementById(`nav-${t}`);
                 if (t === tab) {
-                    nav.className = 'flex items-center px-4 py-3 bg-white/50 rounded-xl font-semibold shadow-sm transition gap-3';
+                    nav.className = 'nav-btn active flex items-center px-4 py-3 bg-white/50 rounded-xl font-semibold shadow-sm transition gap-3 text-xs';
                 } else {
-                    nav.className = 'flex items-center px-4 py-3 hover:bg-white/40 rounded-xl font-medium transition gap-3';
+                    nav.className = 'nav-btn flex items-center px-4 py-3 hover:bg-white/40 rounded-xl font-medium transition gap-3 text-xs';
                 }
             });
-            document.getElementById(`view-${tab}`).classList.remove('hidden');
+            let targetView = document.getElementById(`view-${tab}`);
+            targetView.classList.remove('hidden');
+            targetView.classList.remove('animate-view');
+            void targetView.offsetWidth; // Trigger reflow
+            targetView.classList.add('animate-view');
 
             const titles = {
                 search: ['Tìm kiếm phòng trọ', 'Tìm và đăng ký thuê phòng nhanh chóng'],
@@ -2206,8 +2229,13 @@
                 let contentEl = document.getElementById(`dtab-content-${t}-${roomId}`);
                 let btnEl = document.getElementById(`dtab-${t}-${roomId}`);
                 if (!contentEl || !btnEl) return;
+                
+                contentEl.classList.remove('animate-view');
+                
                 if (t === tab) {
                     contentEl.classList.remove('hidden');
+                    void contentEl.offsetWidth; // trigger reflow
+                    contentEl.classList.add('animate-view');
                     btnEl.className = 'detail-tab-btn active flex-1 py-3.5 text-xs font-bold text-gray-700 transition flex items-center justify-center gap-2';
                 } else {
                     contentEl.classList.add('hidden');
@@ -2487,7 +2515,7 @@
     <!-- ===== CHATBOT ASSISTANT WIDGET ===== -->
     <div id="chatWidget" class="fixed bottom-6 right-6 z-50 flex flex-col items-end">
         <!-- Chat Window -->
-        <div id="chatWindow" class="hidden w-80 md:w-96 h-[450px] glass-modal rounded-3xl border border-white/60 shadow-2xl overflow-hidden flex flex-col mb-4 transition-all duration-300 transform translate-y-4 opacity-0 scale-95">
+        <div id="chatWindow" class="hidden w-80 md:w-96 h-[450px] glass-modal rounded-3xl border border-white/60 shadow-2xl overflow-hidden flex flex-col mb-4">
             <!-- Chat Header -->
             <div class="p-4 bg-gradient-to-r from-blue-600/80 to-indigo-600/80 text-white flex items-center justify-between shrink-0">
                 <div class="flex items-center gap-2.5">
@@ -2538,17 +2566,19 @@
             const chatBubble = document.getElementById('chatBubble');
             if (open) {
                 chatWindow.classList.remove('hidden');
-                setTimeout(() => {
-                    chatWindow.classList.remove('translate-y-4', 'opacity-0', 'scale-95');
-                }, 10);
+                chatWindow.classList.remove('chat-closing');
                 chatBubble.classList.add('hidden');
                 document.getElementById('chatInput').focus();
             } else {
-                chatWindow.classList.add('translate-y-4', 'opacity-0', 'scale-95');
+                chatWindow.classList.add('chat-closing');
                 setTimeout(() => {
                     chatWindow.classList.add('hidden');
-                }, 300);
+                    chatWindow.classList.remove('chat-closing');
+                }, 250);
                 chatBubble.classList.remove('hidden');
+                chatBubble.classList.remove('chat-bubble-pop');
+                void chatBubble.offsetWidth;
+                chatBubble.classList.add('chat-bubble-pop');
             }
         }
 
