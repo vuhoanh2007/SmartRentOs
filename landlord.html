@@ -143,6 +143,30 @@
                     </div>
                 </div>
             </div>
+
+            <!-- Lịch hẹn xem phòng của khách -->
+            <div class="glass-panel p-5 rounded-2xl border border-white/50">
+                <h3 class="font-bold text-gray-900 text-sm mb-3 flex items-center gap-2"><i class="fas fa-calendar-check text-blue-600"></i> Lịch hẹn xem phòng từ khách hàng</h3>
+                <div class="overflow-x-auto">
+                    <table class="w-full text-left text-xs font-semibold min-w-[750px]">
+                        <thead>
+                            <tr class="text-gray-400 border-b border-white/10 uppercase text-[10px]">
+                                <th class="p-3">Khách hàng</th>
+                                <th class="p-3">Số điện thoại</th>
+                                <th class="p-3">Phòng đăng ký</th>
+                                <th class="p-3">Ngày hẹn</th>
+                                <th class="p-3">Khung giờ</th>
+                                <th class="p-3">Ghi chú của khách</th>
+                                <th class="p-3">Trạng thái</th>
+                                <th class="p-3 text-right">Duyệt lịch</th>
+                            </tr>
+                        </thead>
+                        <tbody id="viewingAppointmentRows" class="divide-y divide-white/10 text-gray-700">
+                            <!-- Nạp động -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
         </div>
 
         <!-- ===== TAB: ROOMS ===== -->
@@ -312,6 +336,33 @@
         </div>
     </main>
 
+    <!-- ========================================== -->
+    <!-- MODALS -->
+    <!-- ========================================== -->
+
+    <!-- Modal AI Moderation -->
+    <div id="modalAIModeration" class="hidden fixed inset-0 z-[60] flex items-center justify-center modal-overlay p-4">
+        <div class="glass-modal rounded-3xl w-full max-w-sm mx-auto border border-white/60 shadow-2xl overflow-hidden flex flex-col items-center justify-center p-8 text-center">
+            <div id="aiModSpinner" class="mb-4">
+                <i class="fas fa-robot text-5xl text-blue-500 animate-bounce"></i>
+                <div class="mt-4 flex space-x-1 justify-center">
+                    <div class="w-3 h-3 bg-blue-500 rounded-full animate-bounce" style="animation-delay: -0.3s"></div>
+                    <div class="w-3 h-3 bg-blue-500 rounded-full animate-bounce" style="animation-delay: -0.15s"></div>
+                    <div class="w-3 h-3 bg-blue-500 rounded-full animate-bounce"></div>
+                </div>
+            </div>
+            <h3 class="font-extrabold text-gray-900 text-lg mb-2">Hệ Thống AI Đang Kiểm Duyệt</h3>
+            <p class="text-sm text-gray-500 font-semibold" id="aiModStatus">Đang phân tích hình ảnh và video...</p>
+            
+            <div id="aiModResult" class="hidden w-full mt-4 bg-white/50 p-4 rounded-2xl border text-left text-sm">
+                <!-- Result content -->
+            </div>
+            
+            <button id="aiModCloseBtn" onclick="closeModal('modalAIModeration')" class="hidden mt-6 px-6 py-2.5 bg-gray-200 hover:bg-gray-300 rounded-xl font-bold text-gray-700 transition">Đóng & Chỉnh sửa</button>
+            <button id="aiModPublishBtn" onclick="finalizePublishRoom()" class="hidden mt-6 px-6 py-2.5 bg-emerald-600 hover:bg-emerald-500 rounded-xl font-bold text-white shadow-lg transition">Tiếp tục đăng phòng</button>
+        </div>
+    </div>
+
     <!-- ===== MODAL: THÊM PHÒNG TRỌ MỚI ===== -->
     <div id="modalAddRoom" class="hidden fixed inset-0 z-50 flex items-center justify-center modal-overlay p-4">
         <div class="glass-modal rounded-3xl w-full max-w-lg mx-auto border border-white/60 shadow-2xl overflow-hidden flex flex-col max-h-[90vh]">
@@ -363,6 +414,22 @@
                         <label class="block text-gray-500 font-bold mb-1">Tình trạng nội thất</label>
                         <input type="text" id="arFurniture" placeholder="Đầy đủ nội thất, có máy lạnh, tủ lạnh..." class="bg-white/50 w-full px-3 py-2 border border-white/60 rounded-lg outline-none focus:border-blue-500 font-semibold">
                     </div>
+                    <div class="col-span-2">
+                        <label class="block text-gray-500 font-bold mb-1">Tình trạng vệ sinh</label>
+                        <select id="arHygiene" class="bg-white/50 w-full px-3 py-2 border border-white/60 rounded-lg outline-none focus:border-blue-500 font-semibold">
+                            <option value="Đã dọn dẹp sạch sẽ">Đã dọn dẹp sạch sẽ (Đạt chuẩn)</option>
+                            <option value="Chưa dọn dẹp">Chưa dọn dẹp (Cần cải thiện)</option>
+                        </select>
+                    </div>
+                    <div class="col-span-2">
+                        <label class="block text-gray-500 font-bold mb-1">Nội quy & Quy định phòng</label>
+                        <select id="arRulesTemplate" class="bg-white/50 w-full px-3 py-2 border border-white/60 rounded-lg outline-none focus:border-blue-500 font-semibold mb-2" onchange="if(this.value !== 'custom') document.getElementById('arRules').value = this.value; else document.getElementById('arRules').value = '';">
+                            <option value="1. Giờ giấc tự do. 2. Không ồn ào sau 22h. 3. Vệ sinh chung. 4. Nuôi thú cưng phải báo cáo.">Mẫu 1: Giờ giấc tự do (Khuyến nghị)</option>
+                            <option value="1. Đóng cửa lúc 23h. 2. Giữ vệ sinh chung. 3. Cấm tụ tập nhậu nhẹt. 4. Cấm vật nuôi.">Mẫu 2: An ninh thắt chặt</option>
+                            <option value="custom">Tự soạn thảo (Thủ công)</option>
+                        </select>
+                        <textarea id="arRules" rows="3" placeholder="Nhập quy định thủ công tại đây..." class="bg-white/50 w-full px-3 py-2 border border-white/60 rounded-lg outline-none focus:border-blue-500 font-semibold">1. Giờ giấc tự do. 2. Không ồn ào sau 22h. 3. Vệ sinh chung. 4. Nuôi thú cưng phải báo cáo.</textarea>
+                    </div>
                     <div class="col-span-2 grid grid-cols-2 gap-3 bg-white/20 p-3 rounded-2xl border border-white/25">
                         <div class="col-span-2 text-[10px] text-blue-600 font-bold uppercase tracking-wider"><i class="fas fa-images"></i> Ảnh chụp phòng thực tế</div>
                         <div>
@@ -391,6 +458,82 @@
             <div class="p-5 border-t border-white/20 flex gap-3 shrink-0 bg-white/5">
                 <button onclick="closeModal('modalAddRoom')" class="flex-1 py-2.5 bg-gray-200/75 hover:bg-gray-200 rounded-xl font-bold text-gray-700 transition">Hủy bỏ</button>
                 <button onclick="submitAddRoom()" class="flex-1 py-2.5 bg-emerald-600 hover:bg-emerald-500 text-white rounded-xl font-bold transition shadow-lg">Lưu thông tin</button>
+            </div>
+        </div>
+    </div>
+    
+    <!-- ===== MODAL: SỬA THÔNG TIN PHÒNG TRỌ ===== -->
+    <div id="modalEditRoom" class="hidden fixed inset-0 z-50 flex items-center justify-center modal-overlay p-4">
+        <div class="glass-modal rounded-3xl w-full max-w-lg mx-auto border border-white/60 shadow-2xl overflow-hidden flex flex-col max-h-[90vh]">
+            <div class="p-5 border-b border-white/20 flex justify-between items-center shrink-0">
+                <h3 class="font-extrabold text-gray-900 text-sm"><i class="fas fa-edit text-blue-600 mr-1.5"></i>Sửa Thông Tin Phòng</h3>
+                <button onclick="closeModal('modalEditRoom')" class="w-8 h-8 rounded-xl bg-gray-200/50 hover:bg-gray-200 flex items-center justify-center text-gray-600 transition"><i class="fas fa-times"></i></button>
+            </div>
+            <div class="p-5 overflow-y-auto space-y-3 flex-1 text-xs">
+                <div class="grid grid-cols-2 gap-3">
+                    <input type="hidden" id="erRoomId">
+                    <div class="col-span-2">
+                        <label class="block text-gray-500 font-bold mb-1">Tên phòng trọ</label>
+                        <input type="text" id="erTitle" class="bg-white/50 w-full px-3 py-2 border border-white/60 rounded-lg outline-none focus:border-blue-500 font-semibold">
+                    </div>
+                    <div>
+                        <label class="block text-gray-500 font-bold mb-1">Thể loại phòng</label>
+                        <select id="erDanhMuc" class="bg-white/50 w-full px-3 py-2 border border-white/60 rounded-lg outline-none focus:border-blue-500 font-semibold">
+                            <!-- Nạp danh mục -->
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-gray-500 font-bold mb-1">Giá thuê hằng tháng (đ)</label>
+                        <input type="number" id="erPrice" class="bg-white/50 w-full px-3 py-2 border border-white/60 rounded-lg outline-none focus:border-blue-500 font-semibold">
+                    </div>
+                    <div>
+                        <label class="block text-gray-500 font-bold mb-1">Diện tích (m²)</label>
+                        <input type="number" id="erArea" class="bg-white/50 w-full px-3 py-2 border border-white/60 rounded-lg outline-none focus:border-blue-500 font-semibold">
+                    </div>
+                    <div>
+                        <label class="block text-gray-500 font-bold mb-1">Số người tối đa</label>
+                        <input type="number" id="erMaxOccupants" class="bg-white/50 w-full px-3 py-2 border border-white/60 rounded-lg outline-none focus:border-blue-500 font-semibold">
+                    </div>
+                    <div>
+                        <label class="block text-gray-500 font-bold mb-1">Tòa nhà</label>
+                        <input type="text" id="erToaNha" class="bg-white/50 w-full px-3 py-2 border border-white/60 rounded-lg outline-none focus:border-blue-500 font-semibold">
+                    </div>
+                    <div>
+                        <label class="block text-gray-500 font-bold mb-1">Khu vực</label>
+                        <select id="erKhuVuc" class="bg-white/50 w-full px-3 py-2 border border-white/60 rounded-lg outline-none focus:border-blue-500 font-semibold">
+                            <option value="Thủ Đức">Thủ Đức</option>
+                            <option value="Quận 9">Quận 9</option>
+                            <option value="Quận 2">Quận 2</option>
+                        </select>
+                    </div>
+                    <div class="col-span-2">
+                        <label class="block text-gray-500 font-bold mb-1">Địa chỉ chi tiết</label>
+                        <input type="text" id="erAddress" class="bg-white/50 w-full px-3 py-2 border border-white/60 rounded-lg outline-none focus:border-blue-500 font-semibold">
+                    </div>
+                    <div class="col-span-2">
+                        <label class="block text-gray-500 font-bold mb-1">Tình trạng nội thất</label>
+                        <input type="text" id="erFurniture" class="bg-white/50 w-full px-3 py-2 border border-white/60 rounded-lg outline-none focus:border-blue-500 font-semibold">
+                    </div>
+                    <div class="col-span-2">
+                        <label class="block text-gray-500 font-bold mb-1">Trạng thái phòng</label>
+                        <select id="erStatus" class="bg-white/50 w-full px-3 py-2 border border-white/60 rounded-lg outline-none focus:border-blue-500 font-semibold">
+                            <option value="Trống">Trống</option>
+                            <option value="Đang thuê">Đang thuê</option>
+                            <option value="Bảo trì">Bảo trì</option>
+                        </select>
+                    </div>
+                    <div class="col-span-2">
+                        <label class="block text-gray-500 font-bold mb-1">Ảnh chụp phòng thực tế (Link URL)</label>
+                        <input type="text" id="erImage" class="bg-white/50 w-full px-3 py-2 border border-white/60 rounded-lg outline-none focus:border-blue-500 font-semibold mb-2">
+                    </div>
+                    <div class="col-span-2 text-amber-700 bg-amber-50 p-2 rounded-lg border border-amber-200 text-[10px]">
+                        <i class="fas fa-exclamation-triangle mr-1"></i> Sau khi lưu, thông tin mới sẽ được áp dụng ngay lập tức trên hệ thống tìm kiếm phòng và giao diện khách thuê.
+                    </div>
+                </div>
+            </div>
+            <div class="p-5 border-t border-white/20 flex gap-3 shrink-0 bg-white/5">
+                <button onclick="closeModal('modalEditRoom')" class="flex-1 py-2.5 bg-gray-200/75 hover:bg-gray-200 rounded-xl font-bold text-gray-700 transition">Hủy bỏ</button>
+                <button onclick="submitEditRoom()" class="flex-1 py-2.5 bg-blue-600 hover:bg-blue-500 text-white rounded-xl font-bold transition shadow-lg">Lưu thay đổi</button>
             </div>
         </div>
     </div>
@@ -488,6 +631,113 @@
         </div>
     </div>
 
+    <!-- ===== MODAL: BÀN GIAO PHÒNG (ẢNH CHỤP + ĐIỆN NƯỚC + CHỮ KÝ) ===== -->
+    <div id="modalRoomHandover" class="hidden fixed inset-0 z-50 flex items-center justify-center modal-overlay p-4">
+        <div class="glass-modal rounded-3xl w-full max-w-lg mx-auto border border-white/60 shadow-2xl overflow-hidden flex flex-col max-h-[90vh]">
+            <div class="p-5 border-b border-white/20 flex justify-between items-center bg-white/10 shrink-0">
+                <h3 class="font-extrabold text-gray-900 flex items-center gap-2"><i class="fas fa-file-contract text-blue-600"></i> Lập Biên Bản Bàn Giao Căn Hộ</h3>
+                <button onclick="closeModal('modalRoomHandover')" class="w-8 h-8 rounded-xl bg-gray-200/70 hover:bg-gray-200 flex items-center justify-center text-gray-600 text-sm transition"><i class="fas fa-times"></i></button>
+            </div>
+            
+            <div class="p-5 overflow-y-auto space-y-4 flex-1 text-xs font-semibold text-gray-600">
+                <div class="bg-blue-50/60 p-3.5 rounded-2xl border border-blue-200/30 text-blue-800 leading-snug">
+                    <i class="fas fa-info-circle mr-1"></i> Biên bản bàn giao cần điền chỉ số điện nước thực tế tại công tơ lúc nhận phòng và hình ảnh hiện trạng nội thất thực tế của căn hộ.
+                </div>
+                
+                <input type="hidden" id="hoContractId">
+
+                <!-- Room Photos Condition -->
+                <div>
+                    <label class="block text-gray-500 mb-1">Ảnh chụp hiện trạng phòng trọ (Tối thiểu 1 ảnh)</label>
+                    <div class="flex items-center gap-2.5">
+                        <label class="w-12 h-12 bg-white/50 border border-dashed border-gray-400 hover:border-blue-500 rounded-xl flex flex-col items-center justify-center cursor-pointer transition shrink-0">
+                            <i class="fas fa-camera text-gray-500 text-sm"></i>
+                            <input type="file" id="hoPhotosInput" accept="image/*" multiple onchange="handleHandoverPhotos(this)" class="hidden">
+                        </label>
+                        <div id="hoPhotosPreview" class="flex-1 flex gap-2 overflow-x-auto py-1"></div>
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-gray-500 mb-1">Chỉ số Điện ban đầu (kWh)</label>
+                        <input type="number" id="hoElectricityMeter" value="0" class="bg-white/50 w-full px-3 py-2 border border-white/60 rounded-xl outline-none focus:border-blue-500 text-gray-800 font-bold">
+                    </div>
+                    <div>
+                        <label class="block text-gray-500 mb-1">Chỉ số Nước ban đầu (m³)</label>
+                        <input type="number" id="hoWaterMeter" value="0" class="bg-white/50 w-full px-3 py-2 border border-white/60 rounded-xl outline-none focus:border-blue-500 text-gray-800 font-bold">
+                    </div>
+                </div>
+
+                <div>
+                    <label class="block text-gray-500 mb-1">Ghi chú bàn giao thêm</label>
+                    <textarea id="hoNotes" placeholder="Ví dụ: Tường góc bếp bị ố nhẹ, vòi hoa sen phòng tắm chảy hơi yếu..." class="bg-white/50 w-full px-3 py-2 border border-white/60 rounded-xl outline-none focus:border-blue-500 h-16 resize-none"></textarea>
+                </div>
+
+                <!-- Landlord Signature -->
+                <div class="flex flex-col items-center border-t border-white/20 pt-3">
+                    <label class="block text-gray-500 mb-1 self-start">Khung ký xác nhận của Chủ trọ (Bên A)</label>
+                    <div class="border border-white/80 bg-white/50 rounded-2xl p-2 w-full">
+                        <canvas id="landlordSignatureCanvas" class="w-full h-32 bg-white rounded-xl border border-white/80 cursor-crosshair shadow-inner" style="touch-action: none;"></canvas>
+                    </div>
+                    <div class="flex gap-2 mt-2.5 self-end">
+                        <button onclick="clearLandlordSignature()" class="px-3 py-1.5 bg-gray-200 text-gray-600 rounded-lg font-bold transition text-[10px]">Xóa nét</button>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="p-5 border-t border-white/20 flex gap-3 shrink-0 bg-white/5">
+                <button onclick="closeModal('modalRoomHandover')" class="flex-1 py-2.5 bg-gray-200/75 hover:bg-gray-200 rounded-xl font-bold text-xs text-gray-700 transition">Hủy bỏ</button>
+                <button onclick="submitRoomHandover()" class="flex-1 py-2.5 bg-blue-600 hover:bg-blue-500 text-white rounded-xl font-bold text-xs shadow-lg transition"><i class="fas fa-check-double mr-1"></i>Hoàn tất bàn giao</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- ===== MODAL: SỬA ĐỔI HỢP ĐỒNG (THEO YÊU CẦU CỦA KHÁCH THUÊ) ===== -->
+    <div id="modalReviseContract" class="hidden fixed inset-0 z-50 flex items-center justify-center modal-overlay p-4">
+        <div class="glass-modal rounded-3xl w-full max-w-md mx-auto border border-white/60 shadow-2xl overflow-hidden flex flex-col max-h-[90vh]">
+            <div class="p-5 border-b border-white/20 flex justify-between items-center bg-white/10 shrink-0">
+                <h3 class="font-extrabold text-gray-900 flex items-center gap-2"><i class="fas fa-edit text-amber-500"></i> Cập Nhật Hợp Đồng Theo Yêu Cầu</h3>
+                <button onclick="closeModal('modalReviseContract')" class="w-8 h-8 rounded-xl bg-gray-200/70 hover:bg-gray-200 flex items-center justify-center text-gray-600 text-sm transition"><i class="fas fa-times"></i></button>
+            </div>
+            
+            <div class="p-5 overflow-y-auto space-y-4 flex-1 text-xs font-semibold text-gray-600">
+                <div class="bg-white/80 p-5 rounded-xl border border-white/60 shadow-inner h-64 overflow-y-auto text-[13px] leading-relaxed text-gray-900 space-y-3" style="font-family: 'Times New Roman', Times, serif;">
+                    <span class="block text-[9px] uppercase font-bold tracking-wider text-amber-600 mb-1">Nội dung khách hàng yêu cầu:</span>
+                    <p id="rcTenantNotes" class="italic font-bold text-xs leading-relaxed"></p>
+                </div>
+                
+                <input type="hidden" id="rcContractId">
+
+                <div class="grid grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-gray-500 mb-1">Giá thuê phòng mới (đ/tháng)</label>
+                        <input type="number" id="rcPrice" class="bg-white/50 w-full px-3 py-2 border border-white/60 rounded-xl outline-none focus:border-blue-500 text-gray-800 font-bold">
+                    </div>
+                    <div>
+                        <label class="block text-gray-500 mb-1">Tiền đặt cọc mới (đ)</label>
+                        <input type="number" id="rcDeposit" class="bg-white/50 w-full px-3 py-2 border border-white/60 rounded-xl outline-none focus:border-blue-500 text-gray-800 font-bold">
+                    </div>
+                </div>
+
+                <div>
+                    <label class="block text-gray-500 mb-1">Thời hạn thuê (Tháng)</label>
+                    <select id="rcDuration" class="bg-white/50 w-full px-3 py-2 border border-white/60 rounded-xl outline-none focus:border-blue-500">
+                        <option value="6">6 tháng</option>
+                        <option value="12">12 tháng</option>
+                        <option value="18">18 tháng</option>
+                        <option value="24">24 tháng</option>
+                    </select>
+                </div>
+            </div>
+            
+            <div class="p-5 border-t border-white/20 flex gap-3 shrink-0 bg-white/5">
+                <button onclick="closeModal('modalReviseContract')" class="flex-1 py-2.5 bg-gray-200/75 hover:bg-gray-200 rounded-xl font-bold text-xs text-gray-700 transition">Hủy bỏ</button>
+                <button onclick="submitReviseContract()" class="flex-1 py-2.5 bg-amber-500 hover:bg-amber-600 text-white rounded-xl font-bold text-xs shadow-lg transition"><i class="fas fa-check mr-1"></i>Cập nhật & Gửi lại</button>
+            </div>
+        </div>
+    </div>
+
     <script src="db.js"></script>
     <script>
         checkAuth('landlord');
@@ -505,12 +755,15 @@
         window.addEventListener('storage', (e) => {
             if (e.key === DB_KEY) {
                 let activeTab = 'dashboard';
-                ['dashboard', 'rooms', 'contracts', 'bills', 'incidents'].forEach(t => {
-                    if (!document.getElementById(`view-${t}`).classList.contains('hidden')) {
+                ['dashboard', 'rooms', 'contracts', 'bills', 'incidents', 'settings'].forEach(t => {
+                    if (document.getElementById(`view-${t}`) && !document.getElementById(`view-${t}`).classList.contains('hidden')) {
                         activeTab = t;
                     }
                 });
                 switchTab(activeTab);
+                if (activeTab === 'dashboard') {
+                    loadViewingAppointments();
+                }
             }
         });
 
@@ -749,6 +1002,99 @@
                     });
                 }
             }, 50);
+            loadViewingAppointments();
+        }
+
+        // ============================================================
+        // LỊCH HẸN XEM PHÒNG
+        // ============================================================
+        function loadViewingAppointments() {
+            let db = getData();
+            db.viewingAppointments = db.viewingAppointments || [];
+            
+            let apps = [...db.viewingAppointments].sort((a,b) => b.id.localeCompare(a.id));
+
+            let html = '';
+            if (apps.length === 0) {
+                html = '<tr><td colspan="8" class="p-3 text-center text-gray-400 text-xs font-bold">Chưa có lịch hẹn xem phòng nào từ khách hàng.</td></tr>';
+            } else {
+                apps.forEach(v => {
+                    let badgeClass = '';
+                    let actionHtml = '';
+
+                    if (v.TrangThai === 'Chờ xác nhận') {
+                        badgeClass = 'bg-amber-100 text-amber-600 border-amber-200';
+                        actionHtml = `
+                            <button onclick="updateAppointmentStatus('${v.id}', 'Đã duyệt')" class="px-2.5 py-1 bg-emerald-100 hover:bg-emerald-200 text-emerald-700 rounded-lg text-[10px] font-bold mr-1 transition"><i class="fas fa-check"></i> Duyệt</button>
+                            <button onclick="updateAppointmentStatus('${v.id}', 'Từ chối')" class="px-2.5 py-1 bg-red-100 hover:bg-red-200 text-red-700 rounded-lg text-[10px] font-bold transition"><i class="fas fa-times"></i> Từ chối</button>
+                        `;
+                    } else if (v.TrangThai === 'Đã duyệt') {
+                        badgeClass = 'bg-emerald-100 text-emerald-600 border-emerald-200';
+                        actionHtml = `
+                            <button onclick="updateAppointmentStatus('${v.id}', 'Đã xem')" class="px-2.5 py-1 bg-blue-100 hover:bg-blue-200 text-blue-700 rounded-lg text-[10px] font-bold transition"><i class="fas fa-eye"></i> Xong</button>
+                        `;
+                    } else if (v.TrangThai === 'Từ chối') {
+                        badgeClass = 'bg-red-100 text-red-600 border-red-200';
+                        actionHtml = '<span class="text-gray-400 italic">Đã từ chối</span>';
+                    } else {
+                        badgeClass = 'bg-blue-100 text-blue-600 border-blue-200';
+                        actionHtml = '<span class="text-gray-400 italic">Đã xem</span>';
+                    }
+
+                    html += `
+                    <tr class="hover:bg-white/10 transition text-xs font-semibold">
+                        <td class="p-3 font-bold text-gray-900">${v.TenKhachHang}</td>
+                        <td class="p-3 text-gray-500">${v.SoDienThoai}</td>
+                        <td class="p-3 text-indigo-900">${v.TenPhong}</td>
+                        <td class="p-3 text-gray-500">${v.NgayXem}</td>
+                        <td class="p-3 text-gray-500">${v.KhungGio}</td>
+                        <td class="p-3 text-gray-400 font-medium italic">${v.GhiChu || 'Không có ghi chú'}</td>
+                        <td class="p-3"><span class="chip ${badgeClass}">${v.TrangThai}</span></td>
+                        <td class="p-3 text-right">${actionHtml}</td>
+                    </tr>`;
+                });
+            }
+            document.getElementById('viewingAppointmentRows').innerHTML = html;
+        }
+
+        function updateAppointmentStatus(appId, newStatus) {
+            let db = getData();
+            db.viewingAppointments = db.viewingAppointments || [];
+            let appIdx = db.viewingAppointments.findIndex(v => v.id === appId);
+            if (appIdx === -1) return;
+
+            let app = db.viewingAppointments[appIdx];
+            app.TrangThai = newStatus;
+            db.viewingAppointments[appIdx] = app;
+
+            db.notifications = db.notifications || [];
+            let title = '';
+            let message = '';
+            
+            if (newStatus === 'Đã duyệt') {
+                title = 'Lịch hẹn xem phòng đã được duyệt';
+                message = `Chủ trọ đã duyệt lịch hẹn xem phòng ${app.TenPhong} vào ngày ${app.NgayXem} (${app.KhungGio}).`;
+            } else if (newStatus === 'Từ chối') {
+                title = 'Lịch hẹn xem phòng bị từ chối';
+                message = `Lịch hẹn xem phòng ${app.TenPhong} vào ngày ${app.NgayXem} đã bị từ chối.`;
+            } else {
+                title = 'Cuộc xem phòng đã hoàn thành';
+                message = `Bạn đã hoàn thành xem phòng thực tế ${app.TenPhong}. Hãy ký hợp đồng nếu bạn ưng ý nhé!`;
+            }
+
+            db.notifications.push({
+                id: 'N' + Date.now(),
+                MaKhachHang: app.MaKhachHang,
+                type: 'repair',
+                title: title,
+                message: message,
+                date: new Date().toLocaleDateString('vi-VN'),
+                read: false
+            });
+
+            saveData(db);
+            showToast("Cập nhật lịch hẹn xem phòng thành công!", "success");
+            loadViewingAppointments();
         }
 
         // ============================================================
@@ -785,7 +1131,10 @@
                     </div>
                     <div class="flex justify-between items-center border-t border-white/10 pt-2.5 mt-3">
                         <span class="text-xs text-gray-400 font-bold">${room.ToaNha}</span>
-                        <p class="font-black text-red-500 text-sm">${parseInt(room.GiaThue).toLocaleString('vi-VN')} đ/th</p>
+                        <div class="flex items-center gap-2">
+                            <button onclick="openEditRoomModal('${room.MaPhong}')" class="px-2 py-1 bg-blue-100 hover:bg-blue-200 text-blue-700 rounded text-[10px] font-bold transition"><i class="fas fa-edit"></i> Sửa</button>
+                            <p class="font-black text-red-500 text-sm">${parseInt(room.GiaThue).toLocaleString('vi-VN')} đ/th</p>
+                        </div>
                     </div>
                 </div>`;
             });
@@ -868,6 +1217,8 @@
         }
 
         // Lưu thông tin phòng trọ mới
+        let pendingRoomData = null;
+
         function submitAddRoom() {
             let title = document.getElementById('arTitle').value.trim();
             let catId = parseInt(document.getElementById('arDanhMuc').value);
@@ -877,12 +1228,14 @@
             let building = document.getElementById('arToaNha').value.trim() || 'Tòa nhà Hoàng Diệu';
             let loc = document.getElementById('arKhuVuc').value;
             let addr = document.getElementById('arAddress').value.trim();
-            let furn = document.getElementById('arFurniture').value.trim() || 'Nội thất cơ bản';
+            let furn = document.getElementById('arFurniture').value.trim() || '';
             let video = document.getElementById('arVideo').value.trim() || '';
+            let hygiene = document.getElementById('arHygiene').value;
+            let rules = document.getElementById('arRules').value.trim();
 
-            if (!title || isNaN(price)) { showToast("Vui lòng nhập đầy đủ thông tin phòng!", "error"); return; }
+            if (!title || isNaN(price)) { showToast("Vui lòng nhập đầy đủ thông tin bắt buộc!", "error"); return; }
 
-            // Lấy danh sách ảnh từ cả URL paste-in và tải lên Base64
+            // Lấy danh sách ảnh
             let images = [];
             let urlVal = document.getElementById('arImage').value.trim();
             if (urlVal) {
@@ -890,16 +1243,8 @@
             }
             images = [...images, ...tempUploadedImages];
 
-            // Nếu không có ảnh nào, dùng ảnh mặc định
-            if (images.length === 0) {
-                images.push('https://images.unsplash.com/photo-1513694203232-719a280e022f?w=500');
-            }
-
-            let db = getData();
-            let newId = 'P' + Date.now();
-
-            db.phong.push({
-                MaPhong: newId,
+            pendingRoomData = {
+                MaPhong: 'P' + Date.now(),
                 MaDanhMuc: catId,
                 TenPhong: title,
                 ToaNha: building,
@@ -909,23 +1254,74 @@
                 DienTich: area,
                 SoNguoiToiDa: maxOcc,
                 TinhTrangNoiThat: furn,
+                TinhTrangVeSinh: hygiene,
+                NoiQuy: rules,
                 TrangThai: 'Trống',
-                image: images[0], // Ảnh chính đại diện
-                images: images,  // Mảng tất cả các ảnh
+                images: images,
                 video: video
-            });
+            };
 
+            executeAIModeration(pendingRoomData);
+        }
+
+        function executeAIModeration(room) {
+            openModal('modalAIModeration');
+            document.getElementById('aiModSpinner').classList.remove('hidden');
+            document.getElementById('aiModResult').classList.add('hidden');
+            document.getElementById('aiModCloseBtn').classList.add('hidden');
+            document.getElementById('aiModPublishBtn').classList.add('hidden');
+            document.getElementById('aiModStatus').innerText = "Đang phân tích hình ảnh, video và nội thất...";
+
+            setTimeout(() => {
+                let errors = [];
+                if (room.images.length < 3) errors.push("Cần ít nhất 3 ảnh chụp các góc độ của phòng (hiện có " + room.images.length + ").");
+                if (!room.video) errors.push("Phòng chưa có Video giới thiệu thực tế.");
+                if (room.TinhTrangNoiThat.length < 10) errors.push("Mô tả nội thất quá ngắn, không đạt chuẩn.");
+                if (room.TinhTrangVeSinh !== 'Đã dọn dẹp sạch sẽ') errors.push("Phòng chưa được dọn dẹp vệ sinh đạt chuẩn bàn giao.");
+
+                document.getElementById('aiModSpinner').classList.add('hidden');
+                document.getElementById('aiModResult').classList.remove('hidden');
+
+                let resHtml = '';
+                if (errors.length > 0) {
+                    document.getElementById('aiModStatus').innerText = "Phát hiện lỗi không đạt chuẩn!";
+                    resHtml = `<div class="text-red-500 font-bold mb-2"><i class="fas fa-exclamation-triangle mr-1"></i> Phòng không đủ tiêu chuẩn đăng tải:</div><ul class="list-disc pl-5 text-red-600 font-semibold space-y-1">`;
+                    errors.forEach(e => resHtml += `<li>${e}</li>`);
+                    resHtml += `</ul><div class="mt-3 text-gray-500 italic text-[11px]">Vui lòng bổ sung để đảm bảo chất lượng hệ thống.</div>`;
+                    document.getElementById('aiModResult').className = "w-full mt-4 bg-red-50 p-4 rounded-2xl border border-red-200 text-left text-sm";
+                    document.getElementById('aiModCloseBtn').classList.remove('hidden');
+                } else {
+                    document.getElementById('aiModStatus').innerText = "Kiểm duyệt thành công!";
+                    resHtml = `<div class="text-emerald-600 font-bold mb-2"><i class="fas fa-check-circle mr-1"></i> Phòng đạt 100% tiêu chuẩn đăng tải:</div><ul class="list-disc pl-5 text-emerald-700 font-semibold space-y-1"><li>Số lượng ảnh hợp lệ (≥ 3 ảnh)</li><li>Có video giới thiệu</li><li>Nội thất mô tả chi tiết</li><li>Vệ sinh đạt chuẩn bàn giao</li></ul>`;
+                    document.getElementById('aiModResult').className = "w-full mt-4 bg-emerald-50 p-4 rounded-2xl border border-emerald-200 text-left text-sm";
+                    document.getElementById('aiModPublishBtn').classList.remove('hidden');
+                }
+                document.getElementById('aiModResult').innerHTML = resHtml;
+            }, 2500);
+        }
+
+        function finalizePublishRoom() {
+            let db = getData();
+            if (!pendingRoomData.images || pendingRoomData.images.length === 0) {
+                pendingRoomData.images = ['https://images.unsplash.com/photo-1513694203232-719a280e022f?w=500'];
+            }
+            pendingRoomData.image = pendingRoomData.images[0];
+            
+            db.phong.push(pendingRoomData);
             saveData(db);
             
-            // Xóa sạch trạng thái tạm
+            // Clear form
             tempUploadedImages = [];
             renderUploadedThumbnails();
             document.getElementById('arImage').value = '';
             document.getElementById('arVideo').value = '';
+            document.getElementById('arFurniture').value = '';
+            document.getElementById('arHygiene').value = 'Đã dọn dẹp sạch sẽ';
             
+            closeModal('modalAIModeration');
             closeModal('modalAddRoom');
             loadRooms();
-            showToast(`Thêm thành công phòng ${title}!`, 'success');
+            showToast(`Đăng phòng ${pendingRoomData.TenPhong} thành công!`, 'success');
         }
 
         // ============================================================
@@ -952,18 +1348,47 @@
                 db.hopDong.forEach(h => {
                     let room = db.phong.find(p => p.MaPhong === h.MaPhong);
                     let client = db.khachHang.find(k => k.MaKhachHang === h.MaKhachHang);
-                    let stateColor = h.TrangThaiHopDong === 'Đang hiệu lực' ? 'bg-emerald-100 text-emerald-700' : 'bg-red-100 text-red-700';
+                    
+                    let stateColor = 'bg-gray-100 text-gray-700';
+                    let actionHtml = '—';
+                    let printBtnHtml = `<button onclick="printContract('${h.MaHopDong}')" class="px-2 py-1 bg-indigo-100 hover:bg-indigo-200 text-indigo-700 rounded text-[10px] font-bold transition ml-1" title="Xem & In Hợp đồng"><i class="fas fa-print"></i> In</button>`;
+
+                    if (h.TrangThaiHopDong === 'Đang hiệu lực') {
+                        stateColor = 'bg-emerald-100 text-emerald-700';
+                        actionHtml = `<button onclick="terminateContract('${h.MaHopDong}')" class="px-2 py-1 bg-red-100 hover:bg-red-200 text-red-700 rounded text-[10px] font-bold transition"><i class="fas fa-trash-alt mr-1"></i>Thanh lý</button>` + printBtnHtml;
+                    } else if (h.TrangThaiHopDong === 'Chờ ký') {
+                        stateColor = 'bg-amber-100 text-amber-700';
+                        actionHtml = `<span class="text-amber-600 font-bold italic mr-1">Chờ khách ký</span>` + printBtnHtml;
+                    } else if (h.TrangThaiHopDong === 'Chờ duyệt' || h.TrangThaiHopDong === 'Chờ duyệt sửa') {
+                        stateColor = 'bg-blue-100 text-blue-700';
+                        actionHtml = `<span class="text-blue-600 font-bold italic mr-1">Chờ ký BG</span>` + printBtnHtml;
+                    } else if (h.TrangThaiHopDong === 'Chờ chỉnh sửa') {
+                        stateColor = 'bg-red-100 text-red-700';
+                        actionHtml = `<button onclick="openReviseContractModal('${h.MaHopDong}')" class="px-2 py-1 bg-amber-500 hover:bg-amber-600 text-white rounded text-[10px] font-bold transition"><i class="fas fa-edit mr-1"></i>Sửa HĐ</button>` + printBtnHtml;
+                    } else if (h.TrangThaiHopDong === 'Chờ bàn giao') {
+                        stateColor = 'bg-indigo-100 text-indigo-700';
+                        actionHtml = `<button onclick="openHandoverModal('${h.MaHopDong}')" class="px-2 py-1 bg-blue-600 hover:bg-blue-500 text-white rounded text-[10px] font-bold transition"><i class="fas fa-key mr-1"></i>Bàn giao</button>` + printBtnHtml;
+                    } else if (h.TrangThaiHopDong === 'Chờ khách xác nhận bàn giao') {
+                        stateColor = 'bg-blue-100 text-blue-700';
+                        actionHtml = `<span class="text-blue-600 font-bold italic mr-1">Chờ duyệt BG</span>` + printBtnHtml;
+                    } else if (h.TrangThaiHopDong === 'Thanh lý' || h.TrangThaiHopDong === 'Hết hiệu lực') {
+                        stateColor = 'bg-gray-100 text-gray-700';
+                        actionHtml = `<span class="text-gray-400 italic mr-1">Đã đóng</span>` + printBtnHtml;
+                    } else {
+                        actionHtml = `<span class="text-gray-400 italic mr-1">${h.TrangThaiHopDong}</span>` + printBtnHtml;
+                    }
+
                     html += `
                     <tr class="hover:bg-white/10 transition text-xs font-semibold">
                         <td class="p-3 font-bold text-gray-900">${h.MaHopDong}</td>
                         <td class="p-3 text-gray-600 font-bold">${room ? room.TenPhong : 'N/A'}</td>
                         <td class="p-3 font-bold">${client ? client.TenKhachHang : 'N/A'}</td>
-                        <td class="p-3 text-gray-500">${h.ThoiHanThue} tháng</td>
-                        <td class="p-3 text-gray-500">${h.NgayBatDau.split('T')[0]}</td>
-                        <td class="p-3 text-blue-600 font-bold">${parseInt(h.TongTien).toLocaleString('vi-VN')} đ</td>
+                        <td class="p-3 text-gray-500">${h.ThoiHanThue || 6} tháng</td>
+                        <td class="p-3 text-gray-500">${h.NgayBatDau || h.NgayLap || 'N/A'}</td>
+                        <td class="p-3 text-blue-600 font-bold">${parseInt(h.GiaThue || h.TongTien || 0).toLocaleString('vi-VN')} đ</td>
                         <td class="p-3"><span class="chip ${stateColor}">${h.TrangThaiHopDong}</span></td>
                         <td class="p-3 text-right text-xs">
-                            ${h.TrangThaiHopDong === 'Đang hiệu lực' ? `<button onclick="terminateContract('${h.MaHopDong}')" class="px-2 py-1 bg-red-100 hover:bg-red-200 text-red-700 rounded text-[10px] font-bold transition"><i class="fas fa-trash-alt mr-1"></i>Thanh lý</button>` : '—'}
+                            ${actionHtml}
                         </td>
                     </tr>`;
                 });
@@ -1260,10 +1685,253 @@
                     }
                 }
 
-                saveData(db);
-                loadIncidents();
-                showToast("Cập nhật trạng thái sự cố thành công!");
             }
+        }
+
+        // ============================================================
+        // HỢP ĐỒNG ĐIỆN TỬ & BÀN GIAO PHÒNG WORKFLOW
+        // ============================================================
+        let handoverPhotos = [];
+
+        function openReviseContractModal(contractId) {
+            let db = getData();
+            let contract = db.hopDong.find(h => h.MaHopDong === contractId);
+            if (!contract) return;
+
+            db.contractVersions = db.contractVersions || [];
+            let latestVersion = db.contractVersions
+                .filter(v => v.MaHopDong === contractId)
+                .sort((a,b) => b.Version - a.Version)[0];
+
+            document.getElementById('rcContractId').value = contractId;
+            document.getElementById('rcTenantNotes').innerText = latestVersion ? latestVersion.YeuCauChỉnhSua : "Khách yêu cầu xem xét lại điều khoản.";
+            document.getElementById('rcPrice').value = contract.GiaThue;
+            document.getElementById('rcDeposit').value = contract.TienDatCoc || contract.GiaThue;
+            document.getElementById('rcDuration').value = contract.ThoiHanThue || 6;
+
+            openModal('modalReviseContract');
+        }
+
+        function submitReviseContract() {
+            let contractId = document.getElementById('rcContractId').value;
+            let price = parseInt(document.getElementById('rcPrice').value) || 0;
+            let deposit = parseInt(document.getElementById('rcDeposit').value) || 0;
+            let duration = parseInt(document.getElementById('rcDuration').value) || 6;
+
+            if (price <= 0 || deposit <= 0) {
+                showToast("Vui lòng điền giá trị hợp lý!", "error");
+                return;
+            }
+
+            let db = getData();
+            let contractIdx = db.hopDong.findIndex(h => h.MaHopDong === contractId);
+            if (contractIdx === -1) return;
+
+            let contract = db.hopDong[contractIdx];
+            contract.GiaThue = price;
+            contract.TienDatCoc = deposit;
+            contract.ThoiHanThue = duration;
+            contract.TrangThaiHopDong = 'Chờ ký';
+
+            db.notifications = db.notifications || [];
+            db.notifications.push({
+                id: 'N' + Date.now(),
+                MaKhachHang: contract.MaKhachHang,
+                type: 'repair',
+                title: 'Hợp đồng mới đã được cập nhật',
+                message: `Chủ trọ đã điều chỉnh hợp đồng phòng ${contract.MaPhong} theo yêu cầu của bạn. Vui lòng ký điện tử để tiếp tục.`,
+                date: new Date().toLocaleDateString('vi-VN'),
+                read: false
+            });
+
+            saveData(db);
+            showToast("Cập nhật và gửi lại hợp đồng thành công!", "success");
+            closeModal('modalReviseContract');
+            loadContracts();
+        }
+
+        let hoCanvas = null;
+        let hoCtx = null;
+        let hoIsDrawing = false;
+
+        function openHandoverModal(contractId) {
+            document.getElementById('hoContractId').value = contractId;
+            document.getElementById('hoElectricityMeter').value = 0;
+            document.getElementById('hoWaterMeter').value = 0;
+            document.getElementById('hoNotes').value = '';
+            
+            handoverPhotos = [];
+            document.getElementById('hoPhotosPreview').innerHTML = '';
+
+            openModal('modalRoomHandover');
+
+            setTimeout(() => {
+                hoCanvas = document.getElementById('landlordSignatureCanvas');
+                hoCtx = hoCanvas.getContext('2d');
+                hoCtx.strokeStyle = "#1e3a8a";
+                hoCtx.lineWidth = 3;
+                hoCtx.lineCap = "round";
+
+                let rect = hoCanvas.getBoundingClientRect();
+                hoCanvas.width = rect.width;
+                hoCanvas.height = rect.height;
+
+                hoCanvas.addEventListener('mousedown', startHoDraw);
+                hoCanvas.addEventListener('mousemove', hoDraw);
+                hoCanvas.addEventListener('mouseup', endHoDraw);
+                hoCanvas.addEventListener('mouseleave', endHoDraw);
+
+                hoCanvas.addEventListener('touchstart', startHoDrawTouch);
+                hoCanvas.addEventListener('touchmove', hoDrawTouch);
+                hoCanvas.addEventListener('touchend', endHoDraw);
+            }, 100);
+        }
+
+        function startHoDraw(e) {
+            hoIsDrawing = true;
+            hoCtx.beginPath();
+            hoCtx.moveTo(e.offsetX, e.offsetY);
+        }
+
+        function hoDraw(e) {
+            if (!hoIsDrawing) return;
+            hoCtx.lineTo(e.offsetX, e.offsetY);
+            hoCtx.stroke();
+        }
+
+        function startHoDrawTouch(e) {
+            hoIsDrawing = true;
+            hoCtx.beginPath();
+            let rect = hoCanvas.getBoundingClientRect();
+            let touch = e.touches[0];
+            hoCtx.moveTo(touch.clientX - rect.left, touch.clientY - rect.top);
+            e.preventDefault();
+        }
+
+        function hoDrawTouch(e) {
+            if (!hoIsDrawing) return;
+            let rect = hoCanvas.getBoundingClientRect();
+            let touch = e.touches[0];
+            hoCtx.lineTo(touch.clientX - rect.left, touch.clientY - rect.top);
+            hoCtx.stroke();
+            e.preventDefault();
+        }
+
+        function endHoDraw() {
+            hoIsDrawing = false;
+        }
+
+        function clearLandlordSignature() {
+            if (hoCanvas) {
+                hoCtx.clearRect(0, 0, hoCanvas.width, hoCanvas.height);
+            }
+        }
+
+        function handleHandoverPhotos(input) {
+            let files = Array.from(input.files);
+            files.forEach(file => {
+                let reader = new FileReader();
+                reader.onload = function(e) {
+                    let base64 = e.target.result;
+                    handoverPhotos.push(base64);
+                    renderHandoverPhotosPreview();
+                };
+                reader.readAsDataURL(file);
+            });
+        }
+
+        function renderHandoverPhotosPreview() {
+            let html = '';
+            handoverPhotos.forEach((src, idx) => {
+                html += `
+                <div class="relative w-12 h-12 rounded-lg border border-white/60 overflow-hidden shrink-0 shadow-inner">
+                    <img src="${src}" class="w-full h-full object-cover">
+                    <button onclick="removeHandoverPhoto(${idx})" class="absolute top-0 right-0 w-3.5 h-3.5 bg-red-500 hover:bg-red-600 text-white rounded-full flex items-center justify-center text-[7px] transition"><i class="fas fa-times"></i></button>
+                </div>`;
+            });
+            document.getElementById('hoPhotosPreview').innerHTML = html;
+        }
+
+        function removeHandoverPhoto(idx) {
+            handoverPhotos.splice(idx, 1);
+            renderHandoverPhotosPreview();
+        }
+
+        function submitRoomHandover() {
+            let contractId = document.getElementById('hoContractId').value;
+            let elec = parseInt(document.getElementById('hoElectricityMeter').value) || 0;
+            let water = parseInt(document.getElementById('hoWaterMeter').value) || 0;
+            let notes = document.getElementById('hoNotes').value.trim();
+
+            if (handoverPhotos.length === 0) {
+                showToast("Vui lòng tải lên ít nhất một ảnh hiện trạng căn hộ bàn giao!", "error");
+                return;
+            }
+            if (elec < 0 || water < 0) {
+                showToast("Số đo điện nước phải lớn hơn hoặc bằng 0!", "error");
+                return;
+            }
+
+            let buffer = new Uint32Array(hoCtx.getImageData(0, 0, hoCanvas.width, hoCanvas.height).data.buffer);
+            let hasDrawn = buffer.some(color => color !== 0);
+            if (!hasDrawn) {
+                showToast("Vui lòng vẽ chữ ký xác nhận của bạn!", "error");
+                return;
+            }
+
+            let landlordSig = hoCanvas.toDataURL();
+            let db = getData();
+            let contract = db.hopDong.find(h => h.MaHopDong === contractId);
+            if (!contract) return;
+
+            contract.TrangThaiHopDong = 'Chờ khách xác nhận bàn giao';
+
+            db.handovers = db.handovers || [];
+            db.handovers.push({
+                id: 'H' + Date.now(),
+                MaHopDong: contractId,
+                NgayBanGiao: new Date().toISOString().split('T')[0],
+                ChiSoDienBanDau: elec,
+                ChiSoNuocBanDau: water,
+                AnhBanGiao: handoverPhotos,
+                GhiChu: notes,
+                TrangThai: 'Chờ khách xác nhận'
+            });
+
+            db.electronicSignatures = db.electronicSignatures || [];
+            db.electronicSignatures.push({
+                id: 'ES' + Date.now(),
+                MaHopDong: contractId,
+                LoaiNguoiKy: 'landlord',
+                ChuKyBase64: landlordSig,
+                NgayKy: new Date().toISOString()
+            });
+
+            db.cloudFiles = db.cloudFiles || [];
+            handoverPhotos.forEach((src, idx) => {
+                db.cloudFiles.push({
+                    id: 'CF' + Date.now() + '_' + idx,
+                    TenFile: `handover_photo_${contractId}_${idx}.png`,
+                    MaHopDong: contractId,
+                    DataUrl: src
+                });
+            });
+
+            db.notifications = db.notifications || [];
+            db.notifications.push({
+                id: 'N' + Date.now(),
+                MaKhachHang: contract.MaKhachHang,
+                type: 'repair',
+                title: 'Biên bản bàn giao phòng đang chờ duyệt',
+                message: `Chủ trọ đã lập biên bản bàn giao và ký xác nhận cho căn phòng ${contract.MaPhong}. Vui lòng xác thực.`,
+                date: new Date().toLocaleDateString('vi-VN'),
+                read: false
+            });
+
+            saveData(db);
+            showToast("Lập biên bản bàn giao và ký điện tử thành công!", "success");
+            closeModal('modalRoomHandover');
+            loadContracts();
         }
 
         // ============================================================
@@ -1422,6 +2090,156 @@
             - <i>"Quy định phân chia trách nhiệm sửa chữa thiết bị?"</i><br>
             - <i>"Cách đăng ký tạm trú cho khách thuê online?"</i><br>
             - <i>"Cách tính chỉ số điện nước và xuất hóa đơn?"</i>`;
+        }
+
+        function openEditRoomModal(roomId) {
+            let db = getData();
+            let room = db.phong.find(r => r.MaPhong === roomId);
+            if (!room) return;
+
+            let optHtml = db.danhMuc.map(d => `<option value="${d.MaDanhMuc}" ${d.MaDanhMuc === room.MaDanhMuc ? 'selected' : ''}>${d.TenDanhMuc}</option>`).join('');
+            document.getElementById('erDanhMuc').innerHTML = optHtml;
+
+            document.getElementById('erRoomId').value = room.MaPhong;
+            document.getElementById('erTitle').value = room.TenPhong || '';
+            document.getElementById('erPrice').value = room.GiaThue || '';
+            document.getElementById('erArea').value = room.DienTich || '';
+            document.getElementById('erMaxOccupants').value = room.SoNguoiToiDa || '';
+            document.getElementById('erToaNha').value = room.ToaNha || '';
+            document.getElementById('erKhuVuc').value = room.KhuVuc || 'Thủ Đức';
+            document.getElementById('erAddress').value = room.DiaChi || '';
+            document.getElementById('erFurniture').value = room.TinhTrangNoiThat || '';
+            document.getElementById('erStatus').value = room.TrangThai || 'Trống';
+            document.getElementById('erImage').value = room.image || '';
+
+            openModal('modalEditRoom');
+        }
+
+        function submitEditRoom() {
+            let roomId = document.getElementById('erRoomId').value;
+            let db = getData();
+            let roomIndex = db.phong.findIndex(r => r.MaPhong === roomId);
+            if (roomIndex === -1) return;
+
+            let price = parseInt(document.getElementById('erPrice').value);
+            let area = parseFloat(document.getElementById('erArea').value);
+            let maxOcc = parseInt(document.getElementById('erMaxOccupants').value);
+            
+            if (!document.getElementById('erTitle').value || isNaN(price) || isNaN(area)) {
+                showToast("Vui lòng nhập đầy đủ các thông tin bắt buộc!", "error");
+                return;
+            }
+
+            db.phong[roomIndex].TenPhong = document.getElementById('erTitle').value;
+            db.phong[roomIndex].MaDanhMuc = parseInt(document.getElementById('erDanhMuc').value);
+            db.phong[roomIndex].GiaThue = price;
+            db.phong[roomIndex].DienTich = area;
+            db.phong[roomIndex].SoNguoiToiDa = maxOcc;
+            db.phong[roomIndex].ToaNha = document.getElementById('erToaNha').value;
+            db.phong[roomIndex].KhuVuc = document.getElementById('erKhuVuc').value;
+            db.phong[roomIndex].DiaChi = document.getElementById('erAddress').value;
+            db.phong[roomIndex].TinhTrangNoiThat = document.getElementById('erFurniture').value;
+            db.phong[roomIndex].TrangThai = document.getElementById('erStatus').value;
+            if (document.getElementById('erImage').value) {
+                db.phong[roomIndex].image = document.getElementById('erImage').value;
+            }
+
+            saveData(db);
+            showToast("Đã cập nhật thông tin phòng thành công!", "success");
+            loadRooms();
+            closeModal('modalEditRoom');
+        }
+
+        function printContract(contractId) {
+            let db = getData();
+            let contract = db.hopDong.find(c => c.MaHopDong === contractId);
+            if (!contract) return;
+            let room = db.phong.find(p => p.MaPhong === contract.MaPhong);
+            let tenant = db.khachHang.find(k => k.MaKhachHang === contract.MaKhachHang);
+            let landlord = (db.chuTro && db.chuTro.length > 0) ? db.chuTro[0] : {TenChuTro: "Nguyễn Văn An", SoDienThoai: "0901234567"};
+            
+            let printWindow = window.open('', '_blank');
+            printWindow.document.write(`
+                <html>
+                <head>
+                    <title>Hợp Đồng Thuê Trọ - ${contractId}</title>
+                    <style>
+                        body { font-family: 'Times New Roman', Times, serif; padding: 40px; line-height: 1.6; max-width: 800px; margin: auto; color: #000; }
+                        h1, h2, h3, h4, h5 { text-align: center; margin: 5px 0; }
+                        .text-center { text-align: center; }
+                        .text-right { text-align: right; }
+                        .font-bold { font-weight: bold; }
+                        .italic { font-style: italic; }
+                        .section { margin-top: 20px; }
+                        .signature-container { display: flex; justify-content: space-between; margin-top: 60px; text-align: center; }
+                        .sig-box { width: 45%; }
+                        .sig-img { max-width: 150px; max-height: 80px; margin-top: 10px; display: block; margin-left: auto; margin-right: auto; }
+                        .sig-name { margin-top: 5px; font-weight: bold; text-transform: uppercase; }
+                        @media print {
+                            body { padding: 0; max-width: 100%; }
+                            @page { margin: 2cm; }
+                        }
+                    </style>
+                </head>
+                <body>
+                    <h4>CỘNG HÒA XÃ HỘI CHỦ NGHĨA VIỆT NAM</h4>
+                    <p class="text-center font-bold">Độc lập - Tự do - Hạnh phúc</p>
+                    <hr style="width: 30%; border: 1px solid black; margin: 10px auto 20px auto;">
+                    <h3>HỢP ĐỒNG THUÊ PHÒNG TRỌ</h3>
+                    <p class="text-right italic">Mã hợp đồng: <span class="font-bold">${contract.MaHopDong}</span></p>
+                    <p class="text-right italic">Lập ngày: ${contract.NgayLap || new Date().toISOString().split('T')[0]}</p>
+                    
+                    <div class="section">
+                        <p class="font-bold">BÊN CHO THUÊ (BÊN A):</p>
+                        <p>- Đại diện: <span class="font-bold">${landlord.TenChuTro}</span></p>
+                        <p>- Số điện thoại: ${landlord.SoDienThoai}</p>
+                        <p>- Email: ${landlord.Email || 'Không có'}</p>
+                    </div>
+                    
+                    <div class="section">
+                        <p class="font-bold">BÊN THUÊ PHÒNG (BÊN B):</p>
+                        <p>- Khách hàng: <span class="font-bold">${contract.TenKhachHang || (tenant ? tenant.TenKhachHang : 'N/A')}</span></p>
+                        <p>- Số điện thoại: ${tenant ? tenant.SoDienThoai : 'N/A'}</p>
+                        <p>- Số CCCD: <span class="font-bold">${contract.SoCCCD || 'Chưa cập nhật'}</span></p>
+                        <p>- Ngày cấp: ${contract.NgayCap || 'Chưa cập nhật'}</p>
+                        <p>- Nơi cấp: ${contract.NoiCap || 'Chưa cập nhật'}</p>
+                    </div>
+                    
+                    <div class="section">
+                        <p class="font-bold">ĐIỀU 1: THÔNG TIN PHÒNG & GIÁ THUÊ</p>
+                        <p>- Căn phòng thuê: <span class="font-bold">${room.TenPhong}</span> tại <span class="font-bold">${room.ToaNha || 'Tòa nhà'}</span></p>
+                        <p>- Địa chỉ cụ thể: ${room.DiaChi || 'Chưa cập nhật'}</p>
+                        <p>- Giá thuê cố định: <span class="font-bold">${(contract.GiaThue || 0).toLocaleString('vi-VN')} đ/tháng</span></p>
+                        <p>- Tiền đặt cọc: <span class="font-bold">${(contract.TienDatCoc || contract.TienCoc || contract.GiaThue || 0).toLocaleString('vi-VN')} đ</span></p>
+                    </div>
+                    
+                    <div class="section">
+                        <p class="font-bold">ĐIỀU 2: THỜI HẠN & KỲ ĐÓNG PHÍ</p>
+                        <p>- Thời hạn thuê hợp đồng: <span class="font-bold">${contract.ThoiHanThue || 6} tháng</span></p>
+                        <p>- Kỳ đóng phí tiền phòng: Từ ngày <b>01 đến ngày 05</b> hàng tháng.</p>
+                        <p>- Phí dịch vụ: ${(contract.PhiDichVu || 0).toLocaleString('vi-VN')} đ/tháng.</p>
+                    </div>
+                    
+                    <div class="signature-container">
+                        <div class="sig-box">
+                            <p class="font-bold">BÊN B (KHÁCH THUÊ)</p>
+                            <p class="italic text-[12px]">(Ký, ghi rõ họ tên)</p>
+                            ${contract.ChuKyKhachThue ? '<img src="' + contract.ChuKyKhachThue + '" class="sig-img"><p class="sig-name">' + (contract.TenKhachHang || (tenant ? tenant.TenKhachHang : '')) + '</p>' : '<p style="margin-top:50px; color:#999;">(Chưa ký)</p>'}
+                        </div>
+                        <div class="sig-box">
+                            <p class="font-bold">BÊN A (CHỦ TRỌ)</p>
+                            <p class="italic text-[12px]">(Ký, ghi rõ họ tên)</p>
+                            ${contract.ChuKyChuTro ? '<img src="' + contract.ChuKyChuTro + '" class="sig-img"><p class="sig-name">' + landlord.TenChuTro + '</p>' : '<p style="margin-top:50px; color:#999;">(Chưa ký)</p>'}
+                        </div>
+                    </div>
+                </body>
+                </html>
+            `);
+            printWindow.document.close();
+            // Đợi ảnh chữ ký load xong mới gọi in
+            setTimeout(() => {
+                printWindow.print();
+            }, 500);
         }
     </script>
 </body>
